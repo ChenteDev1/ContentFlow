@@ -1,0 +1,20 @@
+flowchart LR
+    subgraph Local["Equipo del estudiante (Python 3.12)"]
+        J[("data/*.json<br/>2.500 documentos")] --> CI["carga_inicial.py<br/>valida + carga + cuenta"]
+        SC["consultas_negocio.py<br/>consultas_modificacion.py<br/>analitica_negocio.py<br/>optimizacion_indices.py<br/>operaciones_crud.py"]
+        PM["Postman / Swagger"] -->|HTTP JSON| API["api.py (FastAPI)<br/>X-Request-ID + logging"]
+        API --> SV["servicios.py<br/>reglas de integridad"]
+        SC --> SV
+        SV --> VA["validaciones.py"]
+        CFG["config.py<br/>.env + logging + ping"]
+        LOG[("logs/contentflow.log")]
+    end
+    subgraph Azure["Microsoft Azure · North Central US"]
+        CS[("Cosmos DB for MongoDB<br/>Serverless (RU) · contentflow_db")]
+    end
+    CI -->|PyMongo · TLS 1.2 · puerto 10255| CS
+    SV -->|PyMongo · TLS 1.2 · puerto 10255| CS
+    SC -->|lecturas y agregaciones| CS
+    CFG -.-> LOG
+    API -.-> LOG
+    DE["Data Explorer · Mongo Shell"] -->|verificación independiente| CS

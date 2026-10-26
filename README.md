@@ -1,214 +1,101 @@
-# ContentFlow - Implementación NoSQL en Azure Cosmos DB (Serverless)
+# ContentFlow · NoSQL en Azure Cosmos DB for MongoDB
 
-[![Azure Cosmos DB](https://img.shields.io/badge/Azure%20Cosmos%20DB-MongoDB%20API-0089D6?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/services/cosmos-db/)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![PyMongo](https://img.shields.io/badge/PyMongo-4.19.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://pymongo.readthedocs.io/)
-[![Duoc UC](https://img.shields.io/badge/Duoc%20UC-Sede%20Puerto%20Montt-002B49?style=for-the-badge)](https://www.duoc.cl/)
+Evaluación Parcial N°2 (40%) · BDY0101 Base de Datos No Relacionales · Duoc UC Sede Puerto Montt · Caso **ContentFlow (Forma A)**
 
-Repositorio oficial del proyecto técnico y caso de negocio **ContentFlow (Forma A)**, desarrollado para la asignatura **Base de Datos No Relacionales (BDY0101)** - Evaluación Parcial N°2 (40%) en **Duoc UC Sede Puerto Montt**.
+**Equipo:** Carlos Ignacio Bittner Navea · Vicente Benjamin Alarcón Gallardo · Francisco Jesús Aranguiz Inostroza
 
----
+Plataforma de contenidos (usuarios, publicaciones, reacciones, comentarios y campañas) sobre **Azure Cosmos DB for MongoDB (Serverless, RU)**, con consultas de negocio, CRUD multi-colección con reglas de integridad, una **API REST** (FastAPI) y evidencia de integración con Postman.
 
-## 👥 Equipo de Trabajo
-- **Carlos Ignacio Bittner Navea**
-- **Vicente Benjamin Alarcón Gallardo**
-- **Francisco Jesús Aranguiz Inostroza**
+![Arquitectura](informe/diagramas/arquitectura.png)
 
 ---
 
-## 📋 Descripción del Proyecto
-
-**ContentFlow** es una plataforma digital de redes sociales y streaming de contenido interactivo que procesa miles de interacciones: publicaciones multimedia, reacciones emocionales, comentarios estructurados y campañas de marketing.
-
-Este proyecto implementa una solución de persistencia no relacional orientada a documentos en **Microsoft Azure Cosmos DB for MongoDB API** utilizando la modalidad **Serverless**, resolviendo requerimientos de ingesta de datos, analítica de consultas de negocio y un ciclo transaccional CRUD con tolerancia a fallos.
-
-El informe técnico formal completo con análisis exhaustivo, justificaciones teóricas y pauta de cotejo se encuentra en:  
-👉 **[INFORME_TECNICO_CONTENTFLOW.md](INFORME_TECNICO_CONTENTFLOW.md)**
-
----
-
-## 🏛️ Arquitectura de la Solución
-
-```mermaid
-flowchart TD
-    subgraph Local [Entorno de Ejecución Local / On-Premise]
-        PY[Python 3.12 Runtime]
-        PM[Driver PyMongo 4.19.0]
-        DATA[(Dataset JSON<br/>2.500 Docs)]
-        PY --> PM
-        DATA --> PY
-    end
-
-    subgraph Azure [Nube Microsoft Azure]
-        GW[Azure Cosmos DB Gateway<br/>Puerto 10255 / TLS 1.2]
-        CDB[(Azure Cosmos DB<br/>API MongoDB Serverless<br/>contentflow_db)]
-        GW --> CDB
-    end
-
-    PM -->|Conexión TLS Encriptada<br/>replicaSet=globaldb| GW
-    CDB --> C1[usuarios: 500 docs]
-    CDB --> C2[publicaciones: 500 docs]
-    CDB --> C3[reacciones: 500 docs]
-    CDB --> C4[comentarios: 500 docs]
-    CDB --> C5[campañas: 500 docs]
-```
-
-### Decisiones de Arquitectura Clave:
-1. **Modelo Documental (BSON):** Flexibilidad de esquema (*Schema-on-Read*), soporte nativo para arrays (`hashtags`) y eliminación de JOINs relacionales costosos para alimentar feeds en tiempo real.
-2. **Capacidad Serverless:** Cero costo en reposo ($0.00/mes cuando no hay tráfico). Asignación elástica instantánea de Request Units (0 a 5.000 RU/s) ideal para cargas de trabajo analíticas por lotes (*batch*).
-3. **In-Memory Sorting (Timsort):** Push-down de filtros y proyecciones a Cosmos DB para minimizar el payload de red y el consumo de RUs, resolviendo el ordenamiento en memoria en Python ($O(N \log N)$ en < 1 ms) para eludir la restricción de índices compuestos obligatorios en Cosmos DB (`Order by query with composite filter requires composite index`).
-
----
-
-## 🚀 Guía de Despliegue y Ejecución en Microsoft Azure
-
-Sigue estos pasos detallados para aprovisionar los recursos en Azure y ejecutar el proyecto localmente.
-
-### Paso 1: Aprovisionar Azure Cosmos DB en Azure Portal
-
-1. Inicia sesión en [Azure Portal](https://portal.azure.com/).
-2. En la barra de búsqueda superior, escribe **Azure Cosmos DB** y selecciona el servicio.
-3. Haz clic en **+ Crear** y selecciona la opción:  
-   👉 **Azure Cosmos DB for MongoDB** (Protocolo Wire Protocol / RU).
-4. Completa la pestaña **Aspectos básicos (Basics)**:
-   - **Suscripción:** Selecciona tu suscripción activa (ej. Azure for Students).
-   - **Grupo de recursos:** Crea uno nuevo o selecciona uno existente (ej. `rg-contentflow`).
-   - **Nombre de cuenta:** Nombre único (ej. `cosmos-contentflow-mongo-va`).
-   - **Ubicación:** Región más cercana (ej. `East US` o `Brazil South`).
-   - **Modo de capacidad:** Selecciona **Serverless (Sin servidor)** ⚠️ *(Crítico para no generar cobros fijos mensuales)*.
-   - **Versión de MongoDB:** `4.0` o `4.2`.
-5. Haz clic en **Revisar y crear** y luego en **Crear**. Espera a que finalice la implementación.
-
-### Paso 2: Obtener la Cadena de Conexión (Connection String)
-
-1. Ve al recurso Cosmos DB recién creado.
-2. En el menú lateral izquierdo, bajo la sección **Configuración (Settings)**, haz clic en **Claves de acceso (Keys / Connection strings)**.
-3. Copia el valor de **Cadena de conexión principal (PRIMARY CONNECTION STRING)**.  
-   Tendrá un formato similar a:
-   ```text
-   mongodb://<TU_CUENTA>:<TU_PRIMARY_KEY>@<TU_CUENTA>.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@<TU_CUENTA>@
-   ```
-
-> [!IMPORTANT]
-> Los parámetros `ssl=true`, `replicaSet=globaldb`, `retrywrites=false` y `maxIdleTimeMS=120000` son mandatorios para la compatibilidad con Azure Cosmos DB Serverless.
-
----
-
-### Paso 3: Clonar el Repositorio y Configurar el Entorno
+## 1. Puesta en marcha
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/ChenteDUOC/ContentFlow.git
+git clone https://github.com/ChenteDev1/ContentFlow.git
 cd ContentFlow
-
-# 2. Crear entorno virtual de Python
 python -m venv venv
+venv\Scripts\activate            # Windows  (Linux/Mac: source venv/bin/activate)
+pip install -r requirements.txt
 
-# 3. Activar el entorno virtual
-# En Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# En Windows (CMD):
-.\venv\Scripts\activate.bat
-# En Linux / macOS:
-source venv/bin/activate
-
-# 4. Instalar dependencias requeridas
-pip install pymongo
+copy .env.example .env           # Linux/Mac: cp .env.example .env
+# edita .env y reemplaza <PRIMARY_KEY> (Azure Portal > Cosmos DB > Cadenas de conexión)
 ```
 
----
+> `.env` está en `.gitignore`: **la clave nunca debe subirse a GitHub**. Tampoco la muestres en capturas.
 
-### Paso 4: Ejecución del Flujo de Trabajo
+## 2. Orden de ejecución (con la evidencia que debe quedar guardada)
 
-El flujo de trabajo se divide en 3 etapas secuenciales:
+| # | Comando | Qué hace | Captura sugerida (`Evidencias/`) |
+|---|---------|----------|----------------------------------|
+| 1 | `python carga_inicial.py --solo-validar` | Revisa los 5 JSON sin tocar la base | – |
+| 2 | `python carga_inicial.py` | Valida, vacía y carga 2.500 documentos; cuenta lo insertado | `PoblacionBasedeDatos.png` *(ya existe)* |
+| 3 | `python integridad.py` | Auditoría: huérfanos, duplicados, fechas incoherentes | `Integridad_Auditoria.png` |
+| 4 | `python consultas_negocio.py` | 5 consultas de lectura (filtro, proyección, orden) con tiempo, bytes y RU | `Consultas_Lectura.png` |
+| 5 | `python consultas_modificacion.py` | 4 modificaciones (`$set`, `$addToSet`, `$inc`, …) con verificación y reversión | `Consultas_Modificacion.png` |
+| 6 | `python analitica_negocio.py --exportar` | Usuarios activos, contenido popular, horarios, impacto de campañas + CSV para Power BI | `Analitica.png` |
+| 6b | `python generar_dashboard.py` → abrir `dashboard/index.html` | Panel HTML con los gráficos del caso (`--local` si no hay Azure) | `Dashboard_Panel.png` |
+| 7 | `python optimizacion_indices.py` | Mide antes/después de proyección, lotes e índices (IE6) | `Optimizacion_Indices.png` |
+| 8 | `python operaciones_crud.py` | CRUD completo en 5 colecciones + 12 casos inválidos + limpieza | `CRUD_Escenario.png` |
+| 9 | `uvicorn api:app --port 8000` | Levanta la API (Swagger en `http://127.0.0.1:8000/docs`) | `API_Swagger.png` |
+| 10 | Postman → importar `postman/ContentFlow.postman_collection.json` → **Run collection** | Lectura/escritura en tiempo real contra Azure | `Postman_Run.png`, `Postman_Request_*.png` |
+| 11 | `python generar_informe.py` | Arma el informe con los resultados reales y genera el PDF | – |
 
-#### 1. Carga Inicial de Datos (2.500 Documentos)
-Ejecuta la ingestión idempotente de los 5 archivos JSON en `data/` hacia Cosmos DB:
+Además, verifica **por una vía independiente** (IE3): Data Explorer de Azure y Mongo Shell (ya hay capturas) y el endpoint `GET /salud`.
+
+Los resultados de cada script se guardan en `resultados/*.json` y los CSV para Power BI en `exportes/`. El log de todo lo ejecutado queda en `logs/contentflow.log`.
+
+## 3. Estructura
+
+```
+config.py                  .env, logging (consola + archivo) y conexión con timeout y ping
+validaciones.py            reglas de entrada (categorías, fechas, hashtags, correo, campos inmutables…)
+servicios.py               CRUD con reglas de integridad (existencia, fechas, duplicados, cascada)
+carga_inicial.py           carga idempotente: valida JSON → vacía → inserta → cuenta
+integridad.py              auditoría y corrección segura de calidad de datos
+consultas_negocio.py       5 consultas de lectura
+consultas_modificacion.py  4 consultas de modificación (reversibles)
+analitica_negocio.py       analítica del caso + exportación CSV
+generar_dashboard.py       genera dashboard/index.html (panel de gráficos, un solo archivo)
+dashboard/                 plantilla.html + index.html (se abre con doble clic)
+GUIA_DEL_PROYECTO.md       resumen simple: qué es, cómo cumple la pauta, qué falta
+optimizacion_indices.py    experimentos de eficiencia (tiempo, volumen, RU)
+metricas.py                medición (mediana de repeticiones, bytes BSON, RU de Cosmos)
+operaciones_crud.py        escenario CRUD multi-colección
+api.py                     API REST (FastAPI)
+postman/                   colección y entorno de Postman
+tests/                     51 pruebas automáticas (no requieren Azure)
+generar_informe.py         construye el PDF a partir de informe/INFORME_TECNICO_CONTENTFLOW.md
+data/                      los 5 JSON del caso (2.500 documentos)
+Evidencias/                capturas
+```
+
+## 4. Pruebas automáticas (sin Azure)
+
 ```bash
-python carga_inicial.py
-```
-- **Resultado esperado:**
-  ```text
-  Conectando a Azure Cosmos DB...
-  ¡Conexión exitosa a la base de datos!
-  -> Insertados 500 registros en 'usuarios'.
-  -> Insertados 500 registros en 'publicaciones'.
-  -> Insertados 500 registros en 'reacciones'.
-  -> Insertados 500 registros en 'comentarios'.
-  -> Insertados 500 registros en 'campañas'.
-  ¡Carga inicial completada con éxito!
-  ```
-
-#### 2. Consultas Analíticas de Negocio
-Ejecuta las consultas estratégicas de segmentación, tendencias y auditoría con auditoría de latencia en milisegundos:
-```bash
-python consultas_negocio.py
-```
-- **Consulta 1:** Usuarios Masculinos con dispositivo Desktop (58 documentos, ~420 ms).
-- **Consulta 2:** Publicaciones de categoría "Deportes" ordenadas por fecha (100 documentos, ~374 ms).
-- **Consulta 3:** Campañas de marketing con auditoría de objetivos (500 documentos, ~621 ms).
-
-#### 3. Ciclo CRUD Completo y Tolerante a Fallos
-Ejecuta la validación de inserción, lectura, actualización y eliminación de control:
-```bash
-python operaciones_crud.py
-```
-- **[1. CREATE]:** Inserta `pub_evaluacion_test_01` validando `inserted_id`.
-- **[2. READ]:** Lee y valida consistencia de atributos.
-- **[3. UPDATE]:** Modifica contenido y agrega `estado_moderacion: "Aprobado"`, validando `modified_count == 1`.
-- **[4. DELETE]:** Borra el documento, valida `deleted_count == 1` y ejecuta comprobación negativa de inexistencia (`doc is None`).
-
----
-
-## 📂 Estructura del Repositorio
-
-```text
-ContentFlow/
-├── data/                               # Datasets fuente en formato JSON
-│   ├── campañas.json                   # 500 documentos
-│   ├── comentarios.json                # 500 documentos
-│   ├── publicaciones.json              # 500 documentos
-│   ├── reacciones.json                 # 500 documentos
-│   └── usuarios.json                   # 500 documentos
-├── Evidencias/                         # Capturas de ejecución y validación
-│   ├── CreacionRecursoMongoDB.png      # Portal de Azure Cosmos DB
-│   ├── PoblacionBasedeDatos.png        # Inicio de script carga_inicial.py
-│   ├── RegistroscreadosConExito.png    # Inserción de 2.500 documentos
-│   ├── ConfirmarTodosLosDatosInsertados.png # Verificación Data Explorer
-│   ├── ConfirmarInsercionsesMongoShell.png  # Verificación Mongo Shell
-│   ├── EvidenciaConsulta1.png          # Ejecución Consulta de Negocio 1
-│   ├── EvidenciaConsulta2.png          # Ejecución Consulta de Negocio 2
-│   ├── EvidenciaConsulta3.png          # Ejecución Consulta de Negocio 3
-│   └── EvidenciaOperacionCrud.png      # Ciclo CRUD completo en consola
-├── carga_inicial.py                    # Script de ingestión batch idempotente
-├── consultas_negocio.py                # Consultas de negocio con latencia
-├── operaciones_crud.py                 # Ciclo CRUD defensivo tolerante a fallos
-├── EP2_BDY0101_Estudiante_A.pdf        # Pauta y rúbrica oficial de Duoc UC
-├── INFORME_TECNICO_CONTENTFLOW.md      # Informe técnico formal completo (40%)
-└── README.md                           # Instrucciones de despliegue y arquitectura
+python -m pytest -q
 ```
 
----
+Usan una base simulada (`mongomock`) cargada con los JSON reales: validan la **lógica** (consultas, reglas, CRUD, API). Los tiempos y RU **solo son válidos contra Azure** (pasos 4–10).
 
-## 📊 Resumen de Métricas de Latencia
+## 5. Endpoints principales de la API
 
-| Operación | Colección | Volumen | Latencia Promedio |
-| :--- | :--- | :--- | :--- |
-| **Ingesta Masiva Batch** | 5 colecciones | 2.500 docs | ~4.5 s total |
-| **Consulta 1 (Filtro Compuesto)** | `usuarios` | 58 docs | **420.19 ms** |
-| **Consulta 2 (Categoría & Fecha)** | `publicaciones` | 100 docs | **374.38 ms** |
-| **Consulta 3 (Auditoría Campañas)**| `campañas` | 500 docs | **621.09 ms** |
-| **Ciclo CRUD Transaccional** | `publicaciones` | 1 doc | **~180 ms / paso** |
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/salud` | Ping a Cosmos DB, latencia y conteos |
+| GET | `/publicaciones?categoria=&tipo=&limite=&pagina=` | Lista paginada (más recientes primero) |
+| GET / PUT / DELETE | `/publicaciones/{id}` | Leer / modificar / eliminar en cascada |
+| POST | `/publicaciones`, `/usuarios`, `/reacciones`, `/comentarios` | Crear (validación + reglas de integridad) |
+| POST | `/comentarios/{id}/like` | `$inc` atómico |
+| POST | `/campanas/{cid}/publicaciones/{pid}` | Asociar publicación (`$addToSet`) |
+| GET | `/campanas`, `/analitica/*` | Campañas y analítica |
 
----
+Errores controlados: `422` validación · `404` no existe · `409` regla de negocio / duplicado · `503` base no disponible. Cada respuesta incluye `X-Request-ID` (también en el log).
 
-## 🛡️ Tolerancia a Fallos y Buenas Prácticas
-- **Control de Excepciones:** Bloques `try-except` especializados con `PyMongoError`.
-- **Fail-Fast de Red:** `serverSelectionTimeoutMS=5000` para detectar caídas de red en 5 segundos sin bloqueos prolongados.
-- **Sondeo Activo:** Comando administrativo `client.admin.command('ping')` antes de ejecutar operaciones.
-- **Null Safety:** Extracción de atributos de documentos con método `.get(clave, valor_por_defecto)`.
+## 6. Notas importantes
 
----
-
-## 📄 Licencia y Derechos Académicos
-Desarrollado con fines exclusivamente académicos para la **Escuela de Informática y Telecomunicaciones de Duoc UC - Sede Puerto Montt**. Todos los derechos reservados a los autores.
+* **Claves de partición:** por defecto las colecciones se crean *sin* shard key (≈0,66 MB de datos). `python carga_inicial.py --shard-key` **recrea** las colecciones con una clave de partición propuesta (experimental: verifica en Data Explorer > Settings y repite los pasos 4–10).
+* **Orden en el servidor:** Cosmos DB necesita índice para `sort`. El código intenta ordenar en el servidor y, si lo rechaza, ordena en memoria y lo deja en el log. `optimizacion_indices.py` crea los índices y mide la mejora.
+* **Calidad de datos:** el dataset tiene fechas incoherentes (p. ej. 245 reacciones anteriores a su publicación). `integridad.py` las detecta; con `--aplicar` las **marca** (`revision_temporal`) y elimina 1 reacción duplicada.
+* Informe técnico: `informe/INFORME_TECNICO_CONTENTFLOW.md` → PDF generado con `generar_informe.py`.

@@ -41,3 +41,8 @@ venv.bak/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Logs y artefactos locales (pueden contener datos de ejecución)
+logs/*.log*
+.pytest_cache/
+informe/build/

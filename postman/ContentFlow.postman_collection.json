@@ -1,0 +1,768 @@
+{
+  "info": {
+    "name": "ContentFlow API · Cosmos DB for MongoDB",
+    "description": "Lectura/escritura en tiempo real sobre Azure Cosmos DB mediante la API REST (FastAPI + PyMongo). Ejecutar con la API levantada: uvicorn api:app --port 8000. Orden: Run collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "A. Flujo CRUD completo",
+      "item": [
+        {
+          "name": "01 Salud (ping a Cosmos DB)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/salud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "salud"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('estado ok y base conectada', function () { var j = pm.response.json(); pm.expect(j.estado).to.eql('ok'); pm.expect(j.documentos.publicaciones).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 LEER · Listar publicaciones de Deportes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones?categoria=Deportes&limite=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "Deportes"
+                },
+                {
+                  "key": "limite",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('máximo 5 documentos, todos Deportes', function () { var j = pm.response.json(); pm.expect(j.datos.length).to.be.at.most(5); j.datos.forEach(function (p) { pm.expect(p.categoria).to.eql('Deportes'); }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 ESCRIBIR · Crear publicación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_1\",\n  \"contenido\": \"Publicación creada desde Postman\",\n  \"categoria\": \"Tecnología\",\n  \"tipo\": \"Texto\",\n  \"hashtags\": [\n    \"#Azure\",\n    \"#NoSQL\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "var j = pm.response.json(); pm.collectionVariables.set('pubId', j._id);",
+                  "pm.test('devuelve _id nuevo', function () { pm.expect(j._id).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 LEER · Obtener la publicación recién creada (lectura tras escritura)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('el contenido coincide con lo escrito', function () { pm.expect(pm.response.json().contenido).to.eql('Publicación creada desde Postman'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 MODIFICAR · Actualizar contenido y hashtags",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contenido\": \"Publicación EDITADA desde Postman\",\n  \"hashtags\": [\n    \"#Azure\",\n    \"#NoSQL\",\n    \"#Postman\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('cambios aplicados', function () { var j = pm.response.json(); pm.expect(j.contenido).to.include('EDITADA'); pm.expect(j.hashtags).to.include('#Postman'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 ESCRIBIR · Crear reacción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reacciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reacciones"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_2\",\n  \"publicacion_id\": \"{{pubId}}\",\n  \"tipo_reaccion\": \"Me encanta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 ESCRIBIR · Crear comentario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comentarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comentarios"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_3\",\n  \"publicacion_id\": \"{{pubId}}\",\n  \"comentario\": \"Comentario desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.collectionVariables.set('comId', pm.response.json()._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 MODIFICAR · Like atómico al comentario ($inc)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comentarios/{{comId}}/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comentarios",
+                "{{comId}}",
+                "like"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('likes = 1', function () { pm.expect(pm.response.json().likes).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 MODIFICAR · Asociar publicación a la campaña camp_1",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/campanas/camp_1/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campanas",
+                "camp_1",
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('asociación nueva', function () { pm.expect(pm.response.json().asociacion_nueva).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 LEER · Publicación con contadores de interacción",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('1 reacción y 1 comentario', function () { var j = pm.response.json(); pm.expect(j.reacciones).to.eql(1); pm.expect(j.comentarios).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 LEER · Analítica: usuarios más activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/usuarios-activos?top=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "usuarios-activos"
+              ],
+              "query": [
+                {
+                  "key": "top",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('3 usuarios ordenados por índice', function () { var j = pm.response.json(); pm.expect(j.length).to.eql(3); pm.expect(j[0].indice_actividad).to.be.at.least(j[2].indice_actividad); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "B. Casos de error controlados",
+      "item": [
+        {
+          "name": "E1 Validación: categoría inexistente y hashtag mal formado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_1\",\n  \"contenido\": \"x\",\n  \"categoria\": \"Cocina\",\n  \"tipo\": \"Texto\",\n  \"hashtags\": [\n    \"sin_numeral\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('lista de errores', function () { pm.expect(pm.response.json().detalle.length).to.be.at.least(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2 Regla de negocio: usuario inexistente (publicación huérfana)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_999999\",\n  \"contenido\": \"x\",\n  \"categoria\": \"Cultura\",\n  \"tipo\": \"Texto\",\n  \"hashtags\": [\n    \"#a\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E3 Campo inmutable: no se puede cambiar el autor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E4 Reacción duplicada del mismo usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reacciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reacciones"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": \"user_2\",\n  \"publicacion_id\": \"{{pubId}}\",\n  \"tipo_reaccion\": \"Me gusta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E5 Recurso inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/pub_que_no_existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "pub_que_no_existe"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E6 Parámetro fuera de rango (limite=1000)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones?limite=1000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ],
+              "query": [
+                {
+                  "key": "limite",
+                  "value": "1000"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C. Limpieza",
+      "item": [
+        {
+          "name": "12 ELIMINAR · Borrado en cascada",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });",
+                  "pm.test('eliminó publicación, reacción y comentario', function () { var j = pm.response.json(); pm.expect(j.publicaciones).to.eql(1); pm.expect(j.reacciones).to.eql(1); pm.expect(j.comentarios).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 LEER · Confirmar que ya no existe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{pubId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{pubId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado HTTP 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Responde en menos de 3 s (incluye red hacia Azure)', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });",
+                  "pm.test('Trae X-Request-ID para trazabilidad', function () { pm.response.to.have.header('X-Request-ID'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "pubId",
+      "value": ""
+    },
+    {
+      "key": "comId",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+sequenceDiagram
+    autonumber
+    actor C as Postman
+    participant A as api.py (FastAPI)
+    participant V as validaciones.py
+    participant S as servicios.py
+    participant D as Cosmos DB (MongoDB API)
+    participant L as logs/contentflow.log
+    C->>A: POST /publicaciones {JSON}
+    A->>V: validar_publicacion()
+    alt datos inválidos
+        V-->>A: ErrorValidacion
+        A-->>C: 422 {error, detalle[], request_id}
+    else datos válidos
+        A->>S: crear_publicacion()
+        S->>D: find_one(usuario)
+        D-->>S: usuario existe y fecha_registro
+        S->>D: insert_one(publicación)
+        D-->>S: inserted_id
+        S-->>A: documento
+        A-->>C: 201 {documento} + X-Request-ID + X-Process-Time-ms
+    end
+    A->>L: [rid] POST /publicaciones -> 201 (ms)

@@ -1,0 +1,8 @@
+flowchart TD
+    A["DELETE /publicaciones/{id}"] --> B{"¿existe la publicación?"}
+    B -- no --> N["404 no_encontrado"]
+    B -- sí --> R["delete_many reacciones<br/>publicacion_id = id"]
+    R --> M["delete_many comentarios<br/>publicacion_id = id"]
+    M --> K["update_many campañas<br/>$pull publicaciones_asociadas"]
+    K --> P["delete_one publicación"]
+    P --> OK["200 resumen de la cascada<br/>sin huérfanos"]

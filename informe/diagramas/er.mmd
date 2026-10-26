@@ -1,0 +1,39 @@
+erDiagram
+    USUARIOS ||--o{ PUBLICACIONES : "crea (usuario_id)"
+    USUARIOS ||--o{ REACCIONES : "emite (usuario_id)"
+    USUARIOS ||--o{ COMENTARIOS : "escribe (usuario_id)"
+    PUBLICACIONES ||--o{ REACCIONES : "recibe (publicacion_id)"
+    PUBLICACIONES ||--o{ COMENTARIOS : "posee (publicacion_id)"
+    CAMPANAS }o--o{ PUBLICACIONES : "publicaciones_asociadas[]"
+    USUARIOS { string _id PK
+        string nombre
+        string correo
+        string pais
+        string genero
+        string fecha_registro
+        string dispositivo }
+    PUBLICACIONES { string _id PK
+        string usuario_id FK
+        string contenido
+        string fecha_publicacion
+        string categoria
+        array hashtags
+        string tipo }
+    REACCIONES { string _id PK
+        string usuario_id FK
+        string publicacion_id FK
+        string tipo_reaccion
+        string fecha }
+    COMENTARIOS { string _id PK
+        string usuario_id FK
+        string publicacion_id FK
+        string comentario
+        string fecha
+        int likes }
+    CAMPANAS { string _id PK
+        string nombre
+        string fecha_inicio
+        string fecha_fin
+        string objetivo
+        array publicaciones_asociadas
+        object metricas_objetivo }

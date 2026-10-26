@@ -1,0 +1,11 @@
+﻿publicacion_id,reacciones,comentarios,likes_en_comentarios,interacciones,categoria,tipo,autor
+pub_237,3,5,385,8,Deportes,Imagen,user_113
+pub_312,4,3,249,7,Educación,Video,user_364
+pub_50,4,3,119,7,Cultura,Video,user_230
+pub_381,1,5,284,6,Deportes,Texto,user_380
+pub_134,1,5,229,6,Tecnología,Texto,user_167
+pub_425,3,3,171,6,Cultura,Texto,user_175
+pub_41,3,3,142,6,Tecnología,Imagen,user_330
+pub_393,3,3,120,6,Entretenimiento,Video,user_491
+pub_358,4,2,94,6,Cultura,Imagen,user_345
+pub_388,4,2,82,6,Cultura,Video,user_129
