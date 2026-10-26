@@ -1,0 +1,62 @@
+[
+  {
+    "consulta": 1,
+    "titulo": "Usuarios Desktop masculinos (segmentación de audiencia)",
+    "documentos": 58,
+    "orden_en": "memoria (respaldo)",
+    "bytes": 7816,
+    "ms_mediana": 188.65,
+    "ms_min": 186.98,
+    "ms_max": 195.14,
+    "ru": 15.66,
+    "repeticiones": 5
+  },
+  {
+    "consulta": 2,
+    "titulo": "Publicaciones de Deportes, de la más reciente a la más antigua",
+    "documentos": 100,
+    "orden_en": "memoria (respaldo)",
+    "bytes": 16239,
+    "ms_mediana": 193.77,
+    "ms_min": 188.81,
+    "ms_max": 210.32,
+    "ru": 15.32,
+    "repeticiones": 5
+  },
+  {
+    "consulta": 3,
+    "titulo": "Campañas de alto impacto (objetivo + métricas + fecha)",
+    "documentos": 56,
+    "orden_en": "memoria (respaldo)",
+    "bytes": 11650,
+    "ms_mediana": 191.31,
+    "ms_min": 185.59,
+    "ms_max": 206.05,
+    "ru": 18.32,
+    "repeticiones": 5
+  },
+  {
+    "consulta": 4,
+    "titulo": "Videos recientes con hashtags de tendencia (búsqueda compuesta)",
+    "documentos": 67,
+    "orden_en": "memoria (respaldo)",
+    "bytes": 10820,
+    "ms_mediana": 191.16,
+    "ms_min": 190.12,
+    "ms_max": 198.44,
+    "ru": 21.27,
+    "repeticiones": 5
+  },
+  {
+    "consulta": 5,
+    "titulo": "Comentarios más valorados (Top 10 por likes)",
+    "documentos": 63,
+    "orden_en": "memoria (respaldo)",
+    "bytes": 8792,
+    "ms_mediana": 191.66,
+    "ms_min": 186.1,
+    "ms_max": 223.09,
+    "ru": 14.69,
+    "repeticiones": 5
+  }
+]

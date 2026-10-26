@@ -1,0 +1,86 @@
+{
+  "publicaciones_con_usuario_inexistente": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "reacciones_con_usuario_o_publicacion_inexistente": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "comentarios_con_usuario_o_publicacion_inexistente": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "campañas_con_publicaciones_inexistentes": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "reacciones_duplicadas_mismo_usuario_y_publicacion": {
+    "cantidad": 1,
+    "ejemplos": [
+      "user_473->pub_425: ['react_65', 'react_140']"
+    ]
+  },
+  "usuarios_con_correo_duplicado": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "publicaciones_anteriores_al_registro_del_usuario": {
+    "cantidad": 48,
+    "ejemplos": [
+      "pub_105",
+      "pub_120",
+      "pub_122",
+      "pub_135",
+      "pub_150"
+    ]
+  },
+  "reacciones_anteriores_a_su_publicacion": {
+    "cantidad": 245,
+    "ejemplos": [
+      "react_1",
+      "react_100",
+      "react_101",
+      "react_102",
+      "react_104"
+    ]
+  },
+  "comentarios_anteriores_a_su_publicacion": {
+    "cantidad": 251,
+    "ejemplos": [
+      "comm_10",
+      "comm_101",
+      "comm_109",
+      "comm_11",
+      "comm_110"
+    ]
+  },
+  "reacciones_anteriores_al_registro_del_usuario": {
+    "cantidad": 53,
+    "ejemplos": [
+      "react_112",
+      "react_114",
+      "react_119",
+      "react_127",
+      "react_133"
+    ]
+  },
+  "comentarios_anteriores_al_registro_del_usuario": {
+    "cantidad": 54,
+    "ejemplos": [
+      "comm_101",
+      "comm_102",
+      "comm_106",
+      "comm_114",
+      "comm_122"
+    ]
+  },
+  "campañas_con_fin_anterior_al_inicio": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "comentarios_con_likes_invalidos": {
+    "cantidad": 0,
+    "ejemplos": []
+  }
+}
