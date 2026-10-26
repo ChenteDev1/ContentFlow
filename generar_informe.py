@@ -19,6 +19,12 @@ import os
 import re
 import sys
 
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 MD = os.path.join(BASE, "informe", "INFORME_TECNICO_CONTENTFLOW.md")
 SALIDA_DIR = os.path.join(BASE, "informe", "build")
