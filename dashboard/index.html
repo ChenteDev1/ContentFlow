@@ -1,417 +1,1157 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ContentFlow · Panel de analítica</title>
-<style>
-:root {
-  color-scheme: light;
-  --page: #f9f9f7; --surface: #fcfcfb;
-  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
-  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,.10);
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
-  --good: #006300; --warn: #8a5a00; --hover: rgba(42,120,214,.08);
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --page: #0d0d0d; --surface: #1a1a19;
-    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
-    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,.10);
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
-    --good: #0ca30c; --warn: #fab219; --hover: rgba(57,135,229,.14);
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --page: #0d0d0d; --surface: #1a1a19;
-  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
-  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,.10);
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
-  --good: #0ca30c; --warn: #fab219; --hover: rgba(57,135,229,.14);
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--page); color: var(--ink);
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
-.sub { color: var(--ink-2); margin: 0; max-width: 62ch; }
-button { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--ring);
-  border-radius: 8px; padding: 6px 12px; cursor: pointer; }
-button:hover { background: var(--hover); }
-button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
-nav { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 8px; }
-nav a { color: var(--ink-2); text-decoration: none; padding: 4px 10px; border-radius: 999px;
-  border: 1px solid var(--ring); font-size: 13px; background: var(--surface); }
-nav a:hover { color: var(--ink); background: var(--hover); }
-h2 { font-size: 18px; margin: 34px 0 4px; }
-.lead { color: var(--ink-2); margin: 0 0 12px; max-width: 80ch; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 18px; }
-.kpi { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 14px 16px; }
-.kpi .v { font-size: 26px; overflow-wrap: anywhere; font-weight: 650; letter-spacing: -.02em; }
-.kpi .l { color: var(--ink-2); font-size: 13px; }
-.grid { align-items: start; display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 14px; }
-@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 16px; min-width: 0; }
-.card h3 { font-size: 15px; margin: 0; }
-.card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.card .take { color: var(--ink-2); font-size: 13.5px; margin: 4px 0 10px; }
-.card .tbtn { font-size: 12px; padding: 3px 9px; white-space: nowrap; }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin: 0 0 6px; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.chart text { fill: var(--ink-2); font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
-.chart text.val { fill: var(--ink); font-weight: 600; }
-.chart .grid-l { stroke: var(--grid); stroke-width: 1; }
-.chart .base { stroke: var(--axis); stroke-width: 1; }
-.chart .row:hover .hit { fill: var(--hover); }
-.hit { fill: transparent; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--grid); }
-th { color: var(--ink-2); font-weight: 600; }
-td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
-.tbl { overflow-x: auto; }
-.hidden { display: none; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
-.tile { border: 1px solid var(--ring); border-radius: 10px; padding: 8px 10px; }
-.tile b { display: block; font-size: 20px; letter-spacing: -.02em; }
-.tile span { color: var(--ink-2); font-size: 12.5px; }
-.tile.mejor { border-color: var(--s1); }
-.ok { color: var(--good); font-weight: 600; }
-.warn { color: var(--warn); font-weight: 600; }
-.note { background: var(--surface); border: 1px solid var(--ring); border-left: 4px solid var(--s2);
-  border-radius: 8px; padding: 10px 14px; color: var(--ink-2); font-size: 13.5px; margin-top: 14px; }
-#tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink);
-  border: 1px solid var(--ring); box-shadow: 0 4px 16px rgba(0,0,0,.18); border-radius: 8px;
-  padding: 7px 10px; font-size: 12.5px; opacity: 0; transition: opacity .08s; z-index: 10; max-width: 260px; }
-#tip b { display: block; margin-bottom: 2px; }
-footer { color: var(--muted); font-size: 12.5px; margin-top: 34px; border-top: 1px solid var(--grid); padding-top: 12px; }
-@media print { nav, button { display: none; } body { background: #fff; } .card, .kpi { break-inside: avoid; } }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContentFlow · Dashboard de Analítica</title>
+  <meta name="description"
+    content="Panel de analítica de ContentFlow: usuarios activos, contenido popular, horarios de publicación, impacto de campañas y perfil de audiencia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      /* neutros de la interfaz */
+      --bg: #151515; --surface: #151515; --surface2: #1e1e1e;
+      --border: rgba(255, 255, 255, 0.08); --border2: rgba(255, 255, 255, 0.16);
+      --ink: #ececec; --ink2: #a3a3a3; --ink3: #707070;
+      /* paleta de los gráficos (sin cambios) */
+      --blue: #4f7df5; --blue-soft: rgba(79, 125, 245, 0.15);
+      --orange: #f5814f; --orange-soft: rgba(245, 129, 79, 0.15);
+      --green: #3ec97e; --green-soft: rgba(62, 201, 126, 0.15);
+      --purple: #a97af8; --purple-soft: rgba(169, 122, 248, 0.15);
+      --pink: #f56b9a; --pink-soft: rgba(245, 107, 154, 0.15);
+      --yellow: #f5c94f; --yellow-soft: rgba(245, 201, 79, 0.12);
+      --c1: var(--blue); --c2: var(--orange); --c3: var(--green); --c4: var(--purple); --c5: var(--pink);
+      --good: #3ec97e; --warn: #f5c94f; --bad: #f56b9a;
+    }
+    [data-theme="light"] {
+      --bg: #fbfbfa; --surface: #fbfbfa; --surface2: #f1f1ef;
+      --border: rgba(0, 0, 0, 0.08); --border2: rgba(0, 0, 0, 0.16);
+      --ink: #1a1a1a; --ink2: #555555; --ink3: #8c8c8c;
+      --blue: #3464e0; --blue-soft: rgba(52, 100, 224, 0.10);
+      --orange: #d4612b; --orange-soft: rgba(212, 97, 43, 0.10);
+      --green: #22a05a; --green-soft: rgba(34, 160, 90, 0.10);
+      --purple: #7c4fe8; --purple-soft: rgba(124, 79, 232, 0.10);
+      --pink: #d63c71; --pink-soft: rgba(214, 60, 113, 0.10);
+      --yellow-soft: rgba(190, 145, 10, 0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--ink);
+      font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+    [hidden] { display: none !important; }
+    .hidden { display: none !important; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
+
+    /* Encabezado y pestañas */
+    .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 28px 0 22px; }
+    .head h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; display: inline; }
+    .head .sub { color: var(--ink3); margin-left: 10px; }
+    .theme-btn {
+      font: 12.5px var(--font); color: var(--ink2); background: none;
+      border: 1px solid var(--border2); border-radius: 6px; padding: 4px 11px; cursor: pointer;
+    }
+    .theme-btn:hover { color: var(--ink); }
+    .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button {
+      font: 500 13.5px var(--font); color: var(--ink3); background: none; border: 0;
+      border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 14px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .tabs button:hover { color: var(--ink2); }
+    .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+    .tabs button:focus-visible, .theme-btn:focus-visible, .toggle-btn:focus-visible { outline: 2px solid var(--ink3); outline-offset: -2px; }
+
+    /* Cabecera de cada pestaña */
+    .section-header { margin: 32px 0 4px; }
+    .section-header h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3; }
+    .section-lead { color: var(--ink2); font-size: 13.5px; margin-top: 6px; max-width: 70ch; }
+
+    /* Indicadores */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 24px; margin-top: 32px; }
+    .kpi { border-top: 1px solid var(--border2); padding-top: 12px; }
+    .kpi-value { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
+    .kpi-value.sm { font-size: 21px; padding: 5px 0 4px; }
+    .kpi-label { font-size: 12.5px; color: var(--ink2); margin-top: 4px; }
+    .callout { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink2); max-width: 70ch; }
+    .callout strong { color: var(--ink); font-weight: 600; }
+
+    /* Bloques */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 36px 48px; align-items: start; margin-top: 28px; }
+    @media (max-width: 520px) { .card-grid { grid-template-columns: 1fr; } }
+    .card-grid.full { grid-template-columns: 1fr; }
+    .card-grid.thirds { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card { border-top: 1px solid var(--border2); padding-top: 16px; min-width: 0; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+    .card-title { font-size: 14px; font-weight: 600; }
+    .card-subtitle { font-size: 13px; color: var(--ink2); margin-bottom: 14px; line-height: 1.45; }
+    .toggle-btn {
+      font: 12px var(--font); color: var(--ink2); background: none; border: 1px solid var(--border2);
+      border-radius: 5px; padding: 3px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .toggle-btn:hover { color: var(--ink); border-color: var(--ink3); }
+
+    /* Gráficos (estilos sin cambios) */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink2); margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+    .chart-area { width: 100%; overflow: visible; }
+    .chart-area svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart-area text { font-family: var(--font); }
+    .ax-line { stroke: var(--border2); stroke-width: 1; }
+    .grid-line { stroke: var(--border); stroke-width: 1; }
+    .axis-lbl { fill: var(--ink3); font-size: 11px; }
+    .bar-lbl { fill: var(--ink2); font-size: 12px; font-weight: 500; }
+    .val-lbl { fill: var(--ink); font-size: 11.5px; font-weight: 600; }
+    .row-hit { fill: transparent; cursor: default; }
+    .row-hit:hover ~ .bar-lbl { fill: var(--ink); }
+    .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .donut-labels { display: flex; flex-direction: column; gap: 10px; min-width: 140px; }
+    .donut-label-row { display: flex; align-items: center; gap: 8px; }
+    .donut-label-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .donut-label-name { font-size: 12.5px; color: var(--ink2); }
+    .donut-label-pct { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-left: auto; }
+    .donut-center-text { font-family: var(--font); }
+    .area-path { opacity: 0.18; }
+    .area-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+    .audience-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; margin: 10px 0; gap: 2px; }
+    .audience-bar-seg { height: 100%; border-radius: 99px; }
+    .audience-rows { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .audience-row { display: flex; align-items: center; gap: 8px; }
+    .audience-row-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .audience-row-name { font-size: 12.5px; flex: 1; color: var(--ink2); }
+    .audience-row-num { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+    .audience-row-pct { font-size: 11.5px; color: var(--ink3); min-width: 36px; text-align: right; }
+
+    /* Tablas */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 8px 10px; color: var(--ink3); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--border2); }
+    tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: middle; }
+    tbody td:first-child { color: var(--ink); font-weight: 500; }
+    tbody tr:last-child td { border-bottom: none; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pill, .audit-chip { font-size: 12px; font-weight: 500; color: var(--ink2); }
+    .pill.warn, .audit-chip.warn { color: var(--ink); }
+    .pill.warn::before, .audit-chip.warn::before {
+      content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--warn); margin-right: 6px; vertical-align: 1px;
+    }
+
+    /* Franjas horarias */
+    .franjas-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 24px; }
+    @media (max-width: 600px) { .franjas-row { grid-template-columns: repeat(2, 1fr); } }
+    .franja-tile { border-top: 1px solid var(--border2); padding-top: 10px; }
+    .franja-tile.best { border-top: 2px solid var(--ink); margin-top: -1px; }
+    .franja-tile .ft-val { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink2); }
+    .franja-tile.best .ft-val { color: var(--ink); }
+    .franja-tile .ft-name { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+
+    footer {
+      margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--ink3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+    }
+    #tooltip {
+      position: fixed; pointer-events: none; z-index: 999; background: var(--surface2);
+      border: 1px solid var(--border2); border-radius: 6px; padding: 9px 12px; font-size: 12.5px;
+      line-height: 1.55; opacity: 0; transition: opacity 0.12s; max-width: 240px; color: var(--ink);
+    }
+    #tooltip strong { display: block; margin-bottom: 2px; font-size: 13px; }
+    @media print {
+      .tabs, .toggle-btn, .theme-btn { display: none; }
+      .tabpanel[hidden] { display: block !important; }
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>ContentFlow · Panel de analítica</h1>
-      <p class="sub">Respuestas a las tres preguntas de la gerencia: <b>usuarios más activos</b>, <b>contenidos más populares</b> e <b>impacto de las campañas</b>, más el perfil de la audiencia y los horarios de publicación.</p>
+
+  <div class="page">
+    <header class="head">
+      <div><h1>ContentFlow</h1><span class="sub">Dashboard de analítica</span></div>
+      <button type="button" class="theme-btn" id="themeBtn">Tema claro</button>
+    </header>
+    <nav class="tabs" role="tablist" aria-label="Secciones del dashboard">
+      <button type="button" role="tab" id="tab-kpis" data-tab="kpis" aria-controls="kpis" aria-selected="true" tabindex="0">Resumen</button>
+      <button type="button" role="tab" id="tab-usuarios" data-tab="usuarios" aria-controls="usuarios" aria-selected="false" tabindex="-1">Usuarios activos</button>
+      <button type="button" role="tab" id="tab-contenido" data-tab="contenido" aria-controls="contenido" aria-selected="false" tabindex="-1">Contenido popular</button>
+      <button type="button" role="tab" id="tab-horarios" data-tab="horarios" aria-controls="horarios" aria-selected="false" tabindex="-1">Horarios</button>
+      <button type="button" role="tab" id="tab-campanas" data-tab="campanas" aria-controls="campanas" aria-selected="false" tabindex="-1">Campañas</button>
+      <button type="button" role="tab" id="tab-audiencia" data-tab="audiencia" aria-controls="audiencia" aria-selected="false" tabindex="-1">Audiencia</button>
+      <button type="button" role="tab" id="tab-calidad" data-tab="calidad" aria-controls="calidad" aria-selected="false" tabindex="-1">Calidad de datos</button>
+    </nav>
+
+    <!-- ═══ KPIs ═══════════════════════════════════════════════════════ -->
+    <section id="kpis" class="tabpanel" role="tabpanel" aria-labelledby="tab-kpis">
+    <div class="section-header">
+      <h2>Indicadores generales</h2>
+      <p class="section-lead">500 documentos por colección cargados en Azure Cosmos DB for MongoDB.</p>
     </div>
-    <button id="tema" type="button" aria-label="Cambiar tema claro u oscuro">Tema: automático</button>
-  </header>
-  <nav aria-label="Secciones">
-    <a href="#activos">Usuarios activos</a><a href="#popular">Contenido popular</a>
-    <a href="#horarios">Horarios</a><a href="#campanas">Campañas</a>
-    <a href="#audiencia">Audiencia</a><a href="#calidad">Calidad de datos</a>
-  </nav>
-  <section class="kpis" id="kpis" aria-label="Indicadores generales"></section>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="callout">
+      <strong>Cómo leer este panel.</strong> Los datos son sintéticos (500 documentos por colección), por lo que la
+      mayoría de diferencias entre categorías, horas y campañas son <strong>tenues</strong>. El valor del panel es
+      demostrar que las consultas responden correctamente las preguntas del caso de negocio, no declarar "ganadores"
+      definitivos.
+    </div>
 
-  <h2 id="activos">1 · ¿Quiénes son los usuarios más activos?</h2>
-  <p class="lead" id="lead-activos"></p>
-  <div class="grid"><div class="card" id="c-activos"></div></div>
+    <!-- ═══ USUARIOS ACTIVOS ════════════════════════════════════════════ -->
+    </section>
 
-  <h2 id="popular">2 · ¿Qué contenidos son más populares?</h2>
-  <p class="lead">Popularidad = reacciones + comentarios recibidos por la publicación.</p>
-  <div class="grid">
-    <div class="card" id="c-popular"></div>
-    <div class="card" id="c-categorias"></div>
-    <div class="card" id="c-reacciones"></div>
+    <section id="usuarios" class="tabpanel" role="tabpanel" aria-labelledby="tab-usuarios" hidden>
+    <div class="section-header">
+      <h2>¿Quiénes son los usuarios más activos?</h2>
+      <p class="section-lead">Índice de actividad = 3 × publicaciones + 2 × comentarios + 1 × reacciones. Crear
+        contenido pesa más que interactuar con él.</p>
+    </div>
+    <div class="card-grid full">
+      <div class="card" id="card-activos">
+        <div class="card-head">
+          <span class="card-title">Índice de actividad, top 10 (por componente)</span>
+          <button class="toggle-btn" id="btn-activos">Ver tabla</button>
+        </div>
+        <p class="card-subtitle" id="sub-activos"></p>
+        <div class="legend" id="leg-activos">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--blue)"></div>Publicaciones ×3
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--orange)"></div>Comentarios ×2
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--green)"></div>Reacciones ×1
+          </div>
+        </div>
+        <div class="chart-area" id="ch-activos"></div>
+        <div class="tbl-wrap hidden" id="tbl-activos"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CONTENIDO POPULAR ═══════════════════════════════════════════ -->
+    </section>
+
+    <section id="contenido" class="tabpanel" role="tabpanel" aria-labelledby="tab-contenido" hidden>
+    <div class="section-header">
+      <h2>¿Qué contenidos son más populares?</h2>
+      <p class="section-lead">Popularidad = reacciones + comentarios recibidos por publicación.</p>
+    </div>
+    <div class="card-grid">
+      <!-- Top publicaciones -->
+      <div class="card" id="card-popular">
+        <div class="card-head">
+          <span class="card-title">Top 10 publicaciones por interacciones</span>
+          <button class="toggle-btn" id="btn-popular">Ver tabla</button>
+        </div>
+        <p class="card-subtitle" id="sub-popular"></p>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--blue)"></div>Reacciones
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--orange)"></div>Comentarios
+          </div>
+        </div>
+        <div class="chart-area" id="ch-popular"></div>
+        <div class="tbl-wrap hidden" id="tbl-popular"></div>
+      </div>
+      <!-- Categorías -->
+      <div class="card" id="card-cat">
+        <div class="card-head">
+          <span class="card-title">Interacciones promedio por categoría</span>
+          <button class="toggle-btn" id="btn-cat">Ver tabla</button>
+        </div>
+        <p class="card-subtitle" id="sub-cat"></p>
+        <div class="chart-area" id="ch-cat"></div>
+        <div class="tbl-wrap hidden" id="tbl-cat"></div>
+      </div>
+    </div>
+    <!-- Reacciones por tipo -->
+    <div class="card-grid">
+      <div class="card" id="card-reac">
+        <div class="card-head">
+          <span class="card-title">Distribución de reacciones por tipo</span>
+          <button class="toggle-btn" id="btn-reac">Ver tabla</button>
+        </div>
+        <p class="card-subtitle" id="sub-reac"></p>
+        <div class="chart-area" id="ch-reac"></div>
+        <div class="tbl-wrap hidden" id="tbl-reac"></div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+        <p class="card-title" style="margin-bottom:10px;">Tipos de contenido publicado</p>
+        <p class="card-subtitle">Las 500 publicaciones distribuidas por formato de contenido.</p>
+        <div id="tipo-contenido-chart"></div>
+      </div>
+    </div>
+
+    <!-- ═══ HORARIOS ════════════════════════════════════════════════════ -->
+    </section>
+
+    <section id="horarios" class="tabpanel" role="tabpanel" aria-labelledby="tab-horarios" hidden>
+    <div class="section-header">
+      <h2>¿A qué hora conviene publicar?</h2>
+      <p class="section-lead" id="sub-horas"></p>
+    </div>
+    <div class="card-grid full">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Interacciones por publicación según hora del día</span>
+          <button class="toggle-btn" id="btn-horas">Ver tabla</button>
+        </div>
+        <p class="card-subtitle">Cada punto refleja ~20 publicaciones; leer la tendencia, no valores individuales.</p>
+        <div class="chart-area" id="ch-horas"></div>
+        <div class="tbl-wrap hidden" id="tbl-horas"></div>
+        <div class="franjas-row" id="franjas-row"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CAMPAÑAS ════════════════════════════════════════════════════ -->
+    </section>
+
+    <section id="campanas" class="tabpanel" role="tabpanel" aria-labelledby="tab-campanas" hidden>
+    <div class="section-header">
+      <h2>¿Qué impacto tienen las campañas?</h2>
+      <p class="section-lead">Metas promedio por objetivo vs. engagement real observado en publicaciones asociadas.</p>
+    </div>
+    <div class="card-grid">
+      <div class="card" id="card-metas">
+        <div class="card-head">
+          <span class="card-title">Metas promedio por objetivo de campaña</span>
+          <button class="toggle-btn" id="btn-metas">Ver tabla</button>
+        </div>
+        <p class="card-subtitle" id="sub-metas"></p>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--blue)"></div>Likes
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--orange)"></div>Comentarios
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--green)"></div>Compartidos
+          </div>
+        </div>
+        <div class="chart-area" id="ch-metas"></div>
+        <div class="tbl-wrap hidden" id="tbl-metas"></div>
+      </div>
+      <div class="card" id="card-camptop">
+        <div class="card-head">
+          <span class="card-title">Top 10 campañas por engagement observado</span>
+        </div>
+        <p class="card-subtitle" id="sub-camptop"></p>
+        <div class="tbl-wrap" id="tbl-camptop"></div>
+      </div>
+    </div>
+
+    <!-- ═══ AUDIENCIA ═══════════════════════════════════════════════════ -->
+    </section>
+
+    <section id="audiencia" class="tabpanel" role="tabpanel" aria-labelledby="tab-audiencia" hidden>
+    <div class="section-header">
+      <h2>¿Cómo es la audiencia?</h2>
+      <p class="section-lead">Perfil de los 500 usuarios registrados: dispositivo, género y origen geográfico.</p>
+    </div>
+    <div class="card-grid thirds">
+      <div class="card" id="card-disp">
+        <div class="card-title" style="margin-bottom:4px;">Por dispositivo</div>
+        <p class="card-subtitle" id="sub-disp"></p>
+        <div id="ch-disp"></div>
+      </div>
+      <div class="card" id="card-gen">
+        <div class="card-title" style="margin-bottom:4px;">Por género</div>
+        <p class="card-subtitle">Distribución equilibrada entre los tres grupos.</p>
+        <div id="ch-gen"></div>
+      </div>
+      <div class="card" id="card-pais">
+        <div class="card-title" style="margin-bottom:4px;">Top 8 países</div>
+        <p class="card-subtitle">Audiencia muy dispersa. El país líder tiene apenas 6 usuarios.</p>
+        <div class="chart-area" id="ch-pais"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CALIDAD DE DATOS ════════════════════════════════════════════ -->
+    </section>
+
+    <section id="calidad" class="tabpanel" role="tabpanel" aria-labelledby="tab-calidad" hidden>
+    <div class="section-header">
+      <h2>Calidad de los datos</h2>
+      <p class="section-lead">Resultado de la auditoría de integridad (<code>integridad.py</code>). Los problemas se
+        reportan y no se ocultan.</p>
+    </div>
+    <div class="card-grid full">
+      <div class="card">
+        <div class="tbl-wrap" id="tbl-calidad"></div>
+      </div>
+    </div>
+
+    </section>
+
+    <footer>
+      <span>Fuente: Azure Cosmos DB for MongoDB, contentflow_db</span>
+      <span>27-10-2026 14:15</span>
+    </footer>
   </div>
 
-  <h2 id="horarios">3 · ¿A qué hora conviene publicar?</h2>
-  <p class="lead">Interacciones promedio que recibe una publicación según la hora (00–23) en que se publicó.</p>
-  <div class="grid"><div class="card" id="c-horas" style="grid-column: 1 / -1"></div></div>
+  <!-- TOOLTIP -->
+  <div id="tooltip" role="tooltip" aria-live="polite"></div>
 
-  <h2 id="campanas">4 · ¿Qué impacto tienen las campañas?</h2>
-  <p class="lead">Metas que se fijaron las campañas (promedio por objetivo) y el engagement realmente observado en las publicaciones que tienen asociadas.</p>
-  <div class="grid">
-    <div class="card" id="c-metas"></div>
-    <div class="card" id="c-camptop"></div>
-  </div>
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════════
+       DATA
+    ══════════════════════════════════════════════════════════════════════ */
+    const D = { "fuente": "Azure Cosmos DB for MongoDB · contentflow_db", "generado": "26-10-2026 14:15", "conteos": { "usuarios": 500, "publicaciones": 500, "reacciones": 500, "comentarios": 500, "campañas": 500 }, "usuarios_activos": [{ "usuario_id": "user_205", "publicaciones": 4, "comentarios": 3, "reacciones": 2, "indice_actividad": 20, "nombre": "Kathleen Jones", "pais": "Fiji", "dispositivo": "Tablet" }, { "usuario_id": "user_73", "publicaciones": 4, "comentarios": 2, "reacciones": 3, "indice_actividad": 19, "nombre": "Felicia Jensen", "pais": "Cook Islands", "dispositivo": "Móvil" }, { "usuario_id": "user_359", "publicaciones": 4, "comentarios": 2, "reacciones": 2, "indice_actividad": 18, "nombre": "Misty Meyer", "pais": "Saudi Arabia", "dispositivo": "Tablet" }, { "usuario_id": "user_382", "publicaciones": 5, "comentarios": 1, "reacciones": 1, "indice_actividad": 18, "nombre": "William Giles", "pais": "Maldives", "dispositivo": "Tablet" }, { "usuario_id": "user_206", "publicaciones": 3, "comentarios": 4, "reacciones": 0, "indice_actividad": 17, "nombre": "Matthew Hatfield", "pais": "Timor-Leste", "dispositivo": "Desktop" }, { "usuario_id": "user_311", "publicaciones": 3, "comentarios": 1, "reacciones": 6, "indice_actividad": 17, "nombre": "Michael Bass", "pais": "Botswana", "dispositivo": "Móvil" }, { "usuario_id": "user_353", "publicaciones": 4, "comentarios": 2, "reacciones": 1, "indice_actividad": 17, "nombre": "Wendy Carpenter", "pais": "Iraq", "dispositivo": "Tablet" }, { "usuario_id": "user_292", "publicaciones": 3, "comentarios": 3, "reacciones": 1, "indice_actividad": 16, "nombre": "Barbara Wood", "pais": "Kenya", "dispositivo": "Móvil" }, { "usuario_id": "user_300", "publicaciones": 2, "comentarios": 4, "reacciones": 2, "indice_actividad": 16, "nombre": "Tammy Weeks", "pais": "Sierra Leone", "dispositivo": "Desktop" }, { "usuario_id": "user_391", "publicaciones": 3, "comentarios": 3, "reacciones": 1, "indice_actividad": 16, "nombre": "Michael Ware", "pais": "Poland", "dispositivo": "Desktop" }], "pesos": { "publicaciones": 3, "comentarios": 2, "reacciones": 1 }, "contenido_popular": [{ "publicacion_id": "pub_237", "reacciones": 3, "comentarios": 5, "likes_en_comentarios": 385, "interacciones": 8, "categoria": "Deportes", "tipo": "Imagen", "autor": "user_113" }, { "publicacion_id": "pub_312", "reacciones": 4, "comentarios": 3, "likes_en_comentarios": 249, "interacciones": 7, "categoria": "Educación", "tipo": "Video", "autor": "user_364" }, { "publicacion_id": "pub_50", "reacciones": 4, "comentarios": 3, "likes_en_comentarios": 119, "interacciones": 7, "categoria": "Cultura", "tipo": "Video", "autor": "user_230" }, { "publicacion_id": "pub_381", "reacciones": 1, "comentarios": 5, "likes_en_comentarios": 284, "interacciones": 6, "categoria": "Deportes", "tipo": "Texto", "autor": "user_380" }, { "publicacion_id": "pub_134", "reacciones": 1, "comentarios": 5, "likes_en_comentarios": 229, "interacciones": 6, "categoria": "Tecnología", "tipo": "Texto", "autor": "user_167" }, { "publicacion_id": "pub_425", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 171, "interacciones": 6, "categoria": "Cultura", "tipo": "Texto", "autor": "user_175" }, { "publicacion_id": "pub_41", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 142, "interacciones": 6, "categoria": "Tecnología", "tipo": "Imagen", "autor": "user_330" }, { "publicacion_id": "pub_393", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 120, "interacciones": 6, "categoria": "Entretenimiento", "tipo": "Video", "autor": "user_491" }, { "publicacion_id": "pub_358", "reacciones": 4, "comentarios": 2, "likes_en_comentarios": 94, "interacciones": 6, "categoria": "Cultura", "tipo": "Imagen", "autor": "user_345" }, { "publicacion_id": "pub_388", "reacciones": 4, "comentarios": 2, "likes_en_comentarios": 82, "interacciones": 6, "categoria": "Cultura", "tipo": "Video", "autor": "user_129" }], "categorias": [{ "categoria": "Entretenimiento", "publicaciones": 82, "interacciones": 174, "promedio_por_publicacion": 2.12 }, { "categoria": "Educación", "publicaciones": 102, "interacciones": 214, "promedio_por_publicacion": 2.1 }, { "categoria": "Tecnología", "publicaciones": 111, "interacciones": 220, "promedio_por_publicacion": 1.98 }, { "categoria": "Deportes", "publicaciones": 100, "interacciones": 195, "promedio_por_publicacion": 1.95 }, { "categoria": "Cultura", "publicaciones": 105, "interacciones": 197, "promedio_por_publicacion": 1.88 }], "reacciones_tipo": [{ "tipo_reaccion": "Me entristece", "cantidad": 140 }, { "tipo_reaccion": "Me enoja", "cantidad": 125 }, { "tipo_reaccion": "Me gusta", "cantidad": 124 }, { "tipo_reaccion": "Me encanta", "cantidad": 111 }], "horas": [{ "hora": "00", "publicaciones": 20, "interacciones": 42, "interacciones_por_publicacion": 2.1 }, { "hora": "01", "publicaciones": 23, "interacciones": 55, "interacciones_por_publicacion": 2.39 }, { "hora": "02", "publicaciones": 20, "interacciones": 33, "interacciones_por_publicacion": 1.65 }, { "hora": "03", "publicaciones": 16, "interacciones": 25, "interacciones_por_publicacion": 1.56 }, { "hora": "04", "publicaciones": 25, "interacciones": 46, "interacciones_por_publicacion": 1.84 }, { "hora": "05", "publicaciones": 17, "interacciones": 32, "interacciones_por_publicacion": 1.88 }, { "hora": "06", "publicaciones": 14, "interacciones": 31, "interacciones_por_publicacion": 2.21 }, { "hora": "07", "publicaciones": 21, "interacciones": 38, "interacciones_por_publicacion": 1.81 }, { "hora": "08", "publicaciones": 27, "interacciones": 56, "interacciones_por_publicacion": 2.07 }, { "hora": "09", "publicaciones": 18, "interacciones": 36, "interacciones_por_publicacion": 2.0 }, { "hora": "10", "publicaciones": 24, "interacciones": 47, "interacciones_por_publicacion": 1.96 }, { "hora": "11", "publicaciones": 19, "interacciones": 39, "interacciones_por_publicacion": 2.05 }, { "hora": "12", "publicaciones": 24, "interacciones": 42, "interacciones_por_publicacion": 1.75 }, { "hora": "13", "publicaciones": 18, "interacciones": 42, "interacciones_por_publicacion": 2.33 }, { "hora": "14", "publicaciones": 22, "interacciones": 52, "interacciones_por_publicacion": 2.36 }, { "hora": "15", "publicaciones": 22, "interacciones": 50, "interacciones_por_publicacion": 2.27 }, { "hora": "16", "publicaciones": 22, "interacciones": 44, "interacciones_por_publicacion": 2.0 }, { "hora": "17", "publicaciones": 26, "interacciones": 59, "interacciones_por_publicacion": 2.27 }, { "hora": "18", "publicaciones": 26, "interacciones": 44, "interacciones_por_publicacion": 1.69 }, { "hora": "19", "publicaciones": 19, "interacciones": 40, "interacciones_por_publicacion": 2.11 }, { "hora": "20", "publicaciones": 19, "interacciones": 44, "interacciones_por_publicacion": 2.32 }, { "hora": "21", "publicaciones": 16, "interacciones": 34, "interacciones_por_publicacion": 2.12 }, { "hora": "22", "publicaciones": 25, "interacciones": 38, "interacciones_por_publicacion": 1.52 }, { "hora": "23", "publicaciones": 17, "interacciones": 31, "interacciones_por_publicacion": 1.82 }], "franjas": [{ "franja": "Tarde (12-17)", "publicaciones": 134, "interacciones": 289, "interacciones_por_publicacion": 2.16 }, { "franja": "Mañana (06-11)", "publicaciones": 123, "interacciones": 247, "interacciones_por_publicacion": 2.01 }, { "franja": "Madrugada (00-05)", "publicaciones": 121, "interacciones": 233, "interacciones_por_publicacion": 1.93 }, { "franja": "Noche (18-23)", "publicaciones": 122, "interacciones": 231, "interacciones_por_publicacion": 1.89 }], "campanas_objetivo": [{ "objetivo": "Aumentar engagement", "campañas": 165, "meta_likes_prom": 554.7, "meta_comentarios_prom": 266.0, "meta_compartidos_prom": 154.7 }, { "objetivo": "Captar nuevos usuarios", "campañas": 161, "meta_likes_prom": 560.4, "meta_comentarios_prom": 273.1, "meta_compartidos_prom": 159.3 }, { "objetivo": "Promover contenido", "campañas": 174, "meta_likes_prom": 553.4, "meta_comentarios_prom": 288.6, "meta_compartidos_prom": 173.5 }], "campanas_top": [{ "campaña": "camp_375", "nombre": "Campaña Common", "objetivo": "Promover contenido", "publicaciones": 5, "interacciones_observadas": 19, "meta_likes_mas_comentarios": 473, "cumplimiento_pct": 4.02 }, { "campaña": "camp_255", "nombre": "Campaña Beat", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 18, "meta_likes_mas_comentarios": 564, "cumplimiento_pct": 3.19 }, { "campaña": "camp_143", "nombre": "Campaña Set", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 17, "meta_likes_mas_comentarios": 497, "cumplimiento_pct": 3.42 }, { "campaña": "camp_15", "nombre": "Campaña Feel", "objetivo": "Aumentar engagement", "publicaciones": 5, "interacciones_observadas": 17, "meta_likes_mas_comentarios": 621, "cumplimiento_pct": 2.74 }, { "campaña": "camp_326", "nombre": "Campaña Really", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 16, "meta_likes_mas_comentarios": 637, "cumplimiento_pct": 2.51 }, { "campaña": "camp_314", "nombre": "Campaña Nice", "objetivo": "Aumentar engagement", "publicaciones": 5, "interacciones_observadas": 15, "meta_likes_mas_comentarios": 1128, "cumplimiento_pct": 1.33 }, { "campaña": "camp_343", "nombre": "Campaña Bed", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 15, "meta_likes_mas_comentarios": 1108, "cumplimiento_pct": 1.35 }, { "campaña": "camp_209", "nombre": "Campaña Section", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 612, "cumplimiento_pct": 2.29 }, { "campaña": "camp_211", "nombre": "Campaña Culture", "objetivo": "Promover contenido", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 1325, "cumplimiento_pct": 1.06 }, { "campaña": "camp_283", "nombre": "Campaña Particular", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 1398, "cumplimiento_pct": 1.0 }], "audiencia": { "dispositivo": [{ "dispositivo": "Móvil", "usuarios": 173 }, { "dispositivo": "Desktop", "usuarios": 164 }, { "dispositivo": "Tablet", "usuarios": 163 }], "genero": [{ "genero": "Femenino", "usuarios": 173 }, { "genero": "Masculino", "usuarios": 166 }, { "genero": "Otro", "usuarios": 161 }], "paises": [{ "pais": "Cook Islands", "usuarios": 6 }, { "pais": "Bermuda", "usuarios": 5 }, { "pais": "Burkina Faso", "usuarios": 5 }, { "pais": "Ecuador", "usuarios": 5 }, { "pais": "French Polynesia", "usuarios": 5 }, { "pais": "Holy See (Vatican City State)", "usuarios": 5 }, { "pais": "Israel", "usuarios": 5 }, { "pais": "Kenya", "usuarios": 5 }] }, "auditoria": { "publicaciones_con_usuario_inexistente": 0, "reacciones_con_usuario_o_publicacion_inexistente": 0, "comentarios_con_usuario_o_publicacion_inexistente": 0, "campañas_con_publicaciones_inexistentes": 0, "reacciones_duplicadas_mismo_usuario_y_publicacion": 1, "usuarios_con_correo_duplicado": 0, "publicaciones_anteriores_al_registro_del_usuario": 48, "reacciones_anteriores_a_su_publicacion": 245, "comentarios_anteriores_a_su_publicacion": 251, "reacciones_anteriores_al_registro_del_usuario": 53, "comentarios_anteriores_al_registro_del_usuario": 54, "campañas_con_fin_anterior_al_inicio": 0, "comentarios_con_likes_invalidos": 0 } };
 
-  <h2 id="audiencia">5 · ¿Cómo es la audiencia?</h2>
-  <div class="grid">
-    <div class="card" id="c-disp"></div><div class="card" id="c-gen"></div><div class="card" id="c-pais"></div>
-  </div>
+    /* ═══════════════════════════════════════════════════════════════════════
+       UTILS
+    ══════════════════════════════════════════════════════════════════════ */
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const f2 = v => v.toFixed(2).replace('.', ',');
+    const f0 = v => Math.round(v).toLocaleString('es-CL');
+    const COLORS = ['var(--blue)', 'var(--orange)', 'var(--green)', 'var(--purple)', 'var(--pink)'];
+    const COLORS_HEX_DARK = ['#4f7df5', '#f5814f', '#3ec97e', '#a97af8', '#f56b9a'];
+    const COLORS_HEX_LIGHT = ['#3464e0', '#d4612b', '#22a05a', '#7c4fe8', '#d63c71'];
+    const getColors = () => document.documentElement.getAttribute('data-theme') === 'light' ? COLORS_HEX_LIGHT : COLORS_HEX_DARK;
 
-  <h2 id="calidad">6 · Calidad de los datos</h2>
-  <p class="lead">Resultado de la auditoría de integridad (<code>integridad.py</code>). Los problemas se reportan y no se ocultan: afectan la lectura de los gráficos anteriores.</p>
-  <div class="grid"><div class="card" id="c-calidad" style="grid-column: 1 / -1"></div></div>
+    /* ─── Tooltip ─────────────────────────────────────────────────────── */
+    const tip = $('tooltip');
+    function showTip(e, html) {
+      tip.innerHTML = html;
+      tip.style.opacity = 1;
+      const w = tip.offsetWidth, h = tip.offsetHeight;
+      let x = e.clientX + 16, y = e.clientY + 16;
+      if (x + w > innerWidth - 8) x = e.clientX - w - 16;
+      if (y + h > innerHeight - 8) y = e.clientY - h - 16;
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    }
+    const hideTip = () => { tip.style.opacity = 0; };
 
-  <div class="note" id="nota"></div>
-  <footer id="pie"></footer>
-</div>
-<div id="tip" role="tooltip"></div>
+    /* ─── Nice axis scale ─────────────────────────────────────────────── */
+    function niceScale(max, ticks = 5) {
+      if (max <= 0) return { max: 1, step: 0.2, count: 5 };
+      const rough = max / ticks;
+      const exp = Math.floor(Math.log10(rough));
+      const frac = rough / Math.pow(10, exp);
+      let nice = frac < 1.5 ? 1 : frac < 3 ? 2 : frac < 7 ? 5 : 10;
+      const step = nice * Math.pow(10, exp);
+      const niceMax = Math.ceil(max / step) * step;
+      return { max: niceMax, step, count: Math.round(niceMax / step) };
+    }
 
-<script>
-const D = {"fuente": "Azure Cosmos DB for MongoDB · contentflow_db", "generado": "26-10-2026 14:15", "conteos": {"usuarios": 500, "publicaciones": 500, "reacciones": 500, "comentarios": 500, "campañas": 500}, "usuarios_activos": [{"usuario_id": "user_205", "publicaciones": 4, "comentarios": 3, "reacciones": 2, "indice_actividad": 20, "nombre": "Kathleen Jones", "pais": "Fiji", "dispositivo": "Tablet"}, {"usuario_id": "user_73", "publicaciones": 4, "comentarios": 2, "reacciones": 3, "indice_actividad": 19, "nombre": "Felicia Jensen", "pais": "Cook Islands", "dispositivo": "Móvil"}, {"usuario_id": "user_359", "publicaciones": 4, "comentarios": 2, "reacciones": 2, "indice_actividad": 18, "nombre": "Misty Meyer", "pais": "Saudi Arabia", "dispositivo": "Tablet"}, {"usuario_id": "user_382", "publicaciones": 5, "comentarios": 1, "reacciones": 1, "indice_actividad": 18, "nombre": "William Giles", "pais": "Maldives", "dispositivo": "Tablet"}, {"usuario_id": "user_206", "publicaciones": 3, "comentarios": 4, "reacciones": 0, "indice_actividad": 17, "nombre": "Matthew Hatfield", "pais": "Timor-Leste", "dispositivo": "Desktop"}, {"usuario_id": "user_311", "publicaciones": 3, "comentarios": 1, "reacciones": 6, "indice_actividad": 17, "nombre": "Michael Bass", "pais": "Botswana", "dispositivo": "Móvil"}, {"usuario_id": "user_353", "publicaciones": 4, "comentarios": 2, "reacciones": 1, "indice_actividad": 17, "nombre": "Wendy Carpenter", "pais": "Iraq", "dispositivo": "Tablet"}, {"usuario_id": "user_292", "publicaciones": 3, "comentarios": 3, "reacciones": 1, "indice_actividad": 16, "nombre": "Barbara Wood", "pais": "Kenya", "dispositivo": "Móvil"}, {"usuario_id": "user_300", "publicaciones": 2, "comentarios": 4, "reacciones": 2, "indice_actividad": 16, "nombre": "Tammy Weeks", "pais": "Sierra Leone", "dispositivo": "Desktop"}, {"usuario_id": "user_391", "publicaciones": 3, "comentarios": 3, "reacciones": 1, "indice_actividad": 16, "nombre": "Michael Ware", "pais": "Poland", "dispositivo": "Desktop"}], "pesos": {"publicaciones": 3, "comentarios": 2, "reacciones": 1}, "contenido_popular": [{"publicacion_id": "pub_237", "reacciones": 3, "comentarios": 5, "likes_en_comentarios": 385, "interacciones": 8, "categoria": "Deportes", "tipo": "Imagen", "autor": "user_113"}, {"publicacion_id": "pub_312", "reacciones": 4, "comentarios": 3, "likes_en_comentarios": 249, "interacciones": 7, "categoria": "Educación", "tipo": "Video", "autor": "user_364"}, {"publicacion_id": "pub_50", "reacciones": 4, "comentarios": 3, "likes_en_comentarios": 119, "interacciones": 7, "categoria": "Cultura", "tipo": "Video", "autor": "user_230"}, {"publicacion_id": "pub_381", "reacciones": 1, "comentarios": 5, "likes_en_comentarios": 284, "interacciones": 6, "categoria": "Deportes", "tipo": "Texto", "autor": "user_380"}, {"publicacion_id": "pub_134", "reacciones": 1, "comentarios": 5, "likes_en_comentarios": 229, "interacciones": 6, "categoria": "Tecnología", "tipo": "Texto", "autor": "user_167"}, {"publicacion_id": "pub_425", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 171, "interacciones": 6, "categoria": "Cultura", "tipo": "Texto", "autor": "user_175"}, {"publicacion_id": "pub_41", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 142, "interacciones": 6, "categoria": "Tecnología", "tipo": "Imagen", "autor": "user_330"}, {"publicacion_id": "pub_393", "reacciones": 3, "comentarios": 3, "likes_en_comentarios": 120, "interacciones": 6, "categoria": "Entretenimiento", "tipo": "Video", "autor": "user_491"}, {"publicacion_id": "pub_358", "reacciones": 4, "comentarios": 2, "likes_en_comentarios": 94, "interacciones": 6, "categoria": "Cultura", "tipo": "Imagen", "autor": "user_345"}, {"publicacion_id": "pub_388", "reacciones": 4, "comentarios": 2, "likes_en_comentarios": 82, "interacciones": 6, "categoria": "Cultura", "tipo": "Video", "autor": "user_129"}], "categorias": [{"categoria": "Entretenimiento", "publicaciones": 82, "interacciones": 174, "promedio_por_publicacion": 2.12}, {"categoria": "Educación", "publicaciones": 102, "interacciones": 214, "promedio_por_publicacion": 2.1}, {"categoria": "Tecnología", "publicaciones": 111, "interacciones": 220, "promedio_por_publicacion": 1.98}, {"categoria": "Deportes", "publicaciones": 100, "interacciones": 195, "promedio_por_publicacion": 1.95}, {"categoria": "Cultura", "publicaciones": 105, "interacciones": 197, "promedio_por_publicacion": 1.88}], "reacciones_tipo": [{"tipo_reaccion": "Me entristece", "cantidad": 140}, {"tipo_reaccion": "Me enoja", "cantidad": 125}, {"tipo_reaccion": "Me gusta", "cantidad": 124}, {"tipo_reaccion": "Me encanta", "cantidad": 111}], "horas": [{"hora": "00", "publicaciones": 20, "interacciones": 42, "interacciones_por_publicacion": 2.1}, {"hora": "01", "publicaciones": 23, "interacciones": 55, "interacciones_por_publicacion": 2.39}, {"hora": "02", "publicaciones": 20, "interacciones": 33, "interacciones_por_publicacion": 1.65}, {"hora": "03", "publicaciones": 16, "interacciones": 25, "interacciones_por_publicacion": 1.56}, {"hora": "04", "publicaciones": 25, "interacciones": 46, "interacciones_por_publicacion": 1.84}, {"hora": "05", "publicaciones": 17, "interacciones": 32, "interacciones_por_publicacion": 1.88}, {"hora": "06", "publicaciones": 14, "interacciones": 31, "interacciones_por_publicacion": 2.21}, {"hora": "07", "publicaciones": 21, "interacciones": 38, "interacciones_por_publicacion": 1.81}, {"hora": "08", "publicaciones": 27, "interacciones": 56, "interacciones_por_publicacion": 2.07}, {"hora": "09", "publicaciones": 18, "interacciones": 36, "interacciones_por_publicacion": 2.0}, {"hora": "10", "publicaciones": 24, "interacciones": 47, "interacciones_por_publicacion": 1.96}, {"hora": "11", "publicaciones": 19, "interacciones": 39, "interacciones_por_publicacion": 2.05}, {"hora": "12", "publicaciones": 24, "interacciones": 42, "interacciones_por_publicacion": 1.75}, {"hora": "13", "publicaciones": 18, "interacciones": 42, "interacciones_por_publicacion": 2.33}, {"hora": "14", "publicaciones": 22, "interacciones": 52, "interacciones_por_publicacion": 2.36}, {"hora": "15", "publicaciones": 22, "interacciones": 50, "interacciones_por_publicacion": 2.27}, {"hora": "16", "publicaciones": 22, "interacciones": 44, "interacciones_por_publicacion": 2.0}, {"hora": "17", "publicaciones": 26, "interacciones": 59, "interacciones_por_publicacion": 2.27}, {"hora": "18", "publicaciones": 26, "interacciones": 44, "interacciones_por_publicacion": 1.69}, {"hora": "19", "publicaciones": 19, "interacciones": 40, "interacciones_por_publicacion": 2.11}, {"hora": "20", "publicaciones": 19, "interacciones": 44, "interacciones_por_publicacion": 2.32}, {"hora": "21", "publicaciones": 16, "interacciones": 34, "interacciones_por_publicacion": 2.12}, {"hora": "22", "publicaciones": 25, "interacciones": 38, "interacciones_por_publicacion": 1.52}, {"hora": "23", "publicaciones": 17, "interacciones": 31, "interacciones_por_publicacion": 1.82}], "franjas": [{"franja": "Tarde (12-17)", "publicaciones": 134, "interacciones": 289, "interacciones_por_publicacion": 2.16}, {"franja": "Mañana (06-11)", "publicaciones": 123, "interacciones": 247, "interacciones_por_publicacion": 2.01}, {"franja": "Madrugada (00-05)", "publicaciones": 121, "interacciones": 233, "interacciones_por_publicacion": 1.93}, {"franja": "Noche (18-23)", "publicaciones": 122, "interacciones": 231, "interacciones_por_publicacion": 1.89}], "campanas_objetivo": [{"objetivo": "Aumentar engagement", "campañas": 165, "meta_likes_prom": 554.7, "meta_comentarios_prom": 266.0, "meta_compartidos_prom": 154.7}, {"objetivo": "Captar nuevos usuarios", "campañas": 161, "meta_likes_prom": 560.4, "meta_comentarios_prom": 273.1, "meta_compartidos_prom": 159.3}, {"objetivo": "Promover contenido", "campañas": 174, "meta_likes_prom": 553.4, "meta_comentarios_prom": 288.6, "meta_compartidos_prom": 173.5}], "campanas_top": [{"campaña": "camp_375", "nombre": "Campaña Common", "objetivo": "Promover contenido", "publicaciones": 5, "interacciones_observadas": 19, "meta_likes_mas_comentarios": 473, "cumplimiento_pct": 4.02}, {"campaña": "camp_255", "nombre": "Campaña Beat", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 18, "meta_likes_mas_comentarios": 564, "cumplimiento_pct": 3.19}, {"campaña": "camp_143", "nombre": "Campaña Set", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 17, "meta_likes_mas_comentarios": 497, "cumplimiento_pct": 3.42}, {"campaña": "camp_15", "nombre": "Campaña Feel", "objetivo": "Aumentar engagement", "publicaciones": 5, "interacciones_observadas": 17, "meta_likes_mas_comentarios": 621, "cumplimiento_pct": 2.74}, {"campaña": "camp_326", "nombre": "Campaña Really", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 16, "meta_likes_mas_comentarios": 637, "cumplimiento_pct": 2.51}, {"campaña": "camp_314", "nombre": "Campaña Nice", "objetivo": "Aumentar engagement", "publicaciones": 5, "interacciones_observadas": 15, "meta_likes_mas_comentarios": 1128, "cumplimiento_pct": 1.33}, {"campaña": "camp_343", "nombre": "Campaña Bed", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 15, "meta_likes_mas_comentarios": 1108, "cumplimiento_pct": 1.35}, {"campaña": "camp_209", "nombre": "Campaña Section", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 612, "cumplimiento_pct": 2.29}, {"campaña": "camp_211", "nombre": "Campaña Culture", "objetivo": "Promover contenido", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 1325, "cumplimiento_pct": 1.06}, {"campaña": "camp_283", "nombre": "Campaña Particular", "objetivo": "Captar nuevos usuarios", "publicaciones": 5, "interacciones_observadas": 14, "meta_likes_mas_comentarios": 1398, "cumplimiento_pct": 1.0}], "audiencia": {"dispositivo": [{"dispositivo": "Móvil", "usuarios": 173}, {"dispositivo": "Desktop", "usuarios": 164}, {"dispositivo": "Tablet", "usuarios": 163}], "genero": [{"genero": "Femenino", "usuarios": 173}, {"genero": "Masculino", "usuarios": 166}, {"genero": "Otro", "usuarios": 161}], "paises": [{"pais": "Cook Islands", "usuarios": 6}, {"pais": "Bermuda", "usuarios": 5}, {"pais": "Burkina Faso", "usuarios": 5}, {"pais": "Ecuador", "usuarios": 5}, {"pais": "French Polynesia", "usuarios": 5}, {"pais": "Holy See (Vatican City State)", "usuarios": 5}, {"pais": "Israel", "usuarios": 5}, {"pais": "Kenya", "usuarios": 5}]}, "auditoria": {"publicaciones_con_usuario_inexistente": 0, "reacciones_con_usuario_o_publicacion_inexistente": 0, "comentarios_con_usuario_o_publicacion_inexistente": 0, "campañas_con_publicaciones_inexistentes": 0, "reacciones_duplicadas_mismo_usuario_y_publicacion": 1, "usuarios_con_correo_duplicado": 0, "publicaciones_anteriores_al_registro_del_usuario": 48, "reacciones_anteriores_a_su_publicacion": 245, "comentarios_anteriores_a_su_publicacion": 251, "reacciones_anteriores_al_registro_del_usuario": 53, "comentarios_anteriores_al_registro_del_usuario": 54, "campañas_con_fin_anterior_al_inicio": 0, "comentarios_con_likes_invalidos": 0}};
-const nf = new Intl.NumberFormat("es-CL");
-const f1 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const SV = ["var(--s1)", "var(--s2)", "var(--s3)"];
+    /* ─── SVG helpers ─────────────────────────────────────────────────── */
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+    function roundedRectPath(x, y, w, h, tl, tr, br, bl) {
+      if (w <= 0 || h <= 0) return '';
+      tl = Math.min(tl, w / 2, h / 2); tr = Math.min(tr, w / 2, h / 2);
+      br = Math.min(br, w / 2, h / 2); bl = Math.min(bl, w / 2, h / 2);
+      return `M${x + tl},${y} H${x + w - tr} Q${x + w},${y} ${x + w},${y + tr}
+          V${y + h - br} Q${x + w},${y + h} ${x + w - br},${y + h}
+          H${x + bl} Q${x},${y + h} ${x},${y + h - bl}
+          V${y + tl} Q${x},${y} ${x + tl},${y} Z`;
+    }
 
-/* ---------- tooltip ---------- */
-const tip = $("tip");
-function showTip(ev, html) {
-  tip.innerHTML = html; tip.style.opacity = 1;
-  const w = tip.offsetWidth, h = tip.offsetHeight;
-  let x = ev.clientX + 14, y = ev.clientY + 14;
-  if (x + w > innerWidth - 8) x = ev.clientX - w - 14;
-  if (y + h > innerHeight - 8) y = ev.clientY - h - 14;
-  tip.style.left = x + "px"; tip.style.top = y + "px";
-}
-const hideTip = () => { tip.style.opacity = 0; };
+    /* ═══════════════════════════════════════════════════════════════════════
+       CHART: HORIZONTAL STACKED BAR
+       Best for: comparing composition across ranked items (Tableau best practice)
+    ══════════════════════════════════════════════════════════════════════ */
+    function hStackedBar(container, rows, colors, opts = {}) {
+      const W = container.clientWidth || 600;
+      const rowH = 26, gap = 10, padT = 4;
+      const labelW = Math.min(170, W * 0.32), padR = 52;
+      const chartW = W - labelW - padR;
+      const H = padT + rows.length * (rowH + gap);
 
-/* ---------- ejes ---------- */
-function niceScale(v) {
-  if (v <= 0) return { max: 1, step: 0.25 };
-  const p = Math.pow(10, Math.floor(Math.log10(v)));
-  for (const k of [1, 2, 2.5, 5, 10, 20, 25, 50]) {      // paso "redondo" con a lo más 6 marcas
-    const step = k * p / 10 * 1;
-    if (v / step <= 6) return { step, max: Math.ceil(v / step - 1e-9) * step };
-  }
-  return { step: p, max: Math.ceil(v / p) * p };
-}
-/* barra con el extremo de datos redondeado (4px) y la base recta */
-function barPath(x, y, w, h, r, dir) {
-  r = Math.max(0, Math.min(r, w / 2, h / 2));
-  if (w <= 0 || h <= 0) return "";
-  if (dir === "right") return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
-  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
-}
+      const allMax = Math.max(...rows.map(r => r.parts.reduce((a, b) => a + b, 0)));
+      const { max } = niceScale(allMax, 4);
+      const sx = v => (v / max) * chartW;
 
-/* ---------- barras horizontales (simples o apiladas) ---------- */
-function hbar(box, rows, series, o = {}) {
-  const W = Math.max(box.clientWidth, 280), rowH = 28, gap = 8;
-  const padL = Math.min(150, W * 0.34), padR = 54, top = 4;
-  const H = top + rows.length * (rowH + gap) + 18;
-  const { max, step } = niceScale(Math.max(...rows.map((r) => r.parts.reduce((a, b) => a + b, 0)), o.min || 0));
-  const x0 = padL, sx = (v) => (v / max) * (W - padL - padR);
-  let g = "";
-  for (let v = 0; v <= max + 1e-9; v += step) {
-    const x = x0 + sx(v);
-    g += `<line class="grid-l" x1="${x}" x2="${x}" y1="${top}" y2="${H - 18}"/><text x="${x}" y="${H - 4}" text-anchor="middle">${nf.format(+v.toFixed(2))}</text>`;
-  }
-  g += `<line class="base" x1="${x0}" x2="${x0}" y1="${top}" y2="${H - 18}"/>`;
-  rows.forEach((r, i) => {
-    const y = top + i * (rowH + gap), bh = 16, by = y + (rowH - bh) / 2;
-    let x = x0, segs = "";
-    const total = r.parts.reduce((a, b) => a + b, 0);
-    const last = r.parts.map((p, k) => p > 0 ? k : -1).reduce((a, b) => Math.max(a, b), -1);
-    r.parts.forEach((p, k) => {
-      if (p <= 0) return;
-      const w = sx(p), draw = k === last ? w : Math.max(w - 2, 0.5);
-      segs += `<path d="${barPath(x, by, draw, bh, k === last ? 4 : 0, "right")}" style="fill:${SV[series.length === 1 ? 0 : k]}"/>`;
-      x += w;
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': opts.aria || '' });
+
+      // Grid lines
+      const { step } = niceScale(allMax, 4);
+      for (let v = 0; v <= max + 1e-9; v += step) {
+        const x = labelW + sx(v);
+        const gl = svgEl('line', { class: 'grid-line', x1: x, x2: x, y1: padT, y2: H });
+        svg.appendChild(gl);
+      }
+      // Axis
+      const axLine = svgEl('line', { class: 'ax-line', x1: labelW, x2: labelW, y1: padT, y2: H });
+      svg.appendChild(axLine);
+
+      rows.forEach((row, i) => {
+        const y = padT + i * (rowH + gap);
+        const by = y + (rowH - 18) / 2;
+        const total = row.parts.reduce((a, b) => a + b, 0);
+
+        // Hit area
+        const hit = svgEl('rect', { class: 'row-hit', x: 0, y, width: W, height: rowH });
+        hit.addEventListener('mousemove', e => showTip(e, row.tip));
+        hit.addEventListener('mouseleave', hideTip);
+
+        // Label
+        const lbl = svgEl('text', {
+          class: 'bar-lbl', x: labelW - 8, y: y + rowH / 2 + 4,
+          'text-anchor': 'end', 'font-size': 11.5
+        });
+        lbl.textContent = row.label.length > 22 ? row.label.slice(0, 21) + '…' : row.label;
+
+        // Stacked bars
+        const g = svgEl('g', {});
+        let cx = labelW;
+        row.parts.forEach((p, k) => {
+          if (p <= 0) return;
+          const bw = sx(p);
+          const isLast = k === row.parts.length - 1 || row.parts.slice(k + 1).every(x => x <= 0);
+          const path = svgEl('path', {
+            d: roundedRectPath(cx, by, bw - (isLast ? 0 : 1), 18, 0, isLast ? 4 : 0, isLast ? 4 : 0, 0),
+            fill: colors[k] || colors[0]
+          });
+          g.appendChild(path);
+          cx += bw;
+        });
+
+        // Value label
+        const vl = svgEl('text', {
+          class: 'val-lbl', x: cx + 6, y: y + rowH / 2 + 4,
+          'font-size': 11, 'font-weight': 600
+        });
+        vl.textContent = opts.fmt ? opts.fmt(total) : f0(total);
+
+        svg.appendChild(hit);
+        svg.appendChild(lbl);
+        svg.appendChild(g);
+        svg.appendChild(vl);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(svg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CHART: DONUT CHART
+       Best for: part-to-whole relationships with ≤5 categories (Tableau)
+    ══════════════════════════════════════════════════════════════════════ */
+    function donutChart(container, data, colors, opts = {}) {
+      const size = opts.size || 160;
+      const cx = size / 2, cy = size / 2, R = size / 2 - 10, r = R * 0.56;
+      const total = data.reduce((a, d) => a + d.value, 0);
+
+      let html = `<div class="donut-wrap">`;
+      html += `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${opts.aria || ''}">`;
+
+      let angle = -Math.PI / 2;
+      const arcs = [];
+      data.forEach((d, i) => {
+        const theta = (d.value / total) * 2 * Math.PI;
+        const x1 = cx + R * Math.cos(angle), y1 = cy + R * Math.sin(angle);
+        const x2 = cx + R * Math.cos(angle + theta), y2 = cy + R * Math.sin(angle + theta);
+        const xi1 = cx + r * Math.cos(angle), yi1 = cy + r * Math.sin(angle);
+        const xi2 = cx + r * Math.cos(angle + theta), yi2 = cy + r * Math.sin(angle + theta);
+        const large = theta > Math.PI ? 1 : 0;
+        const path = `M${x1},${y1} A${R},${R},0,${large},1,${x2},${y2} L${xi2},${yi2} A${r},${r},0,${large},0,${xi1},${yi1} Z`;
+        arcs.push({ path, color: colors[i], d, theta, angle });
+        angle += theta;
+      });
+
+      arcs.forEach(({ path, color, d }) => {
+        const pct = Math.round(100 * d.value / total);
+        html += `<path d="${path}" fill="${color}" opacity="0.92" class="donut-arc"
+      data-tip="<strong>${esc(d.label)}</strong>${d.value} (${pct}%)"
+      style="cursor:default;transition:opacity .15s"/>`;
+      });
+
+      // Center text
+      if (opts.centerLabel) {
+        html += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" class="donut-center-text" font-size="22" font-weight="700" fill="var(--ink)">${total}</text>`;
+        html += `<text x="${cx}" y="${cy + 12}" text-anchor="middle" class="donut-center-text" font-size="10" fill="var(--ink3)">${opts.centerLabel}</text>`;
+      }
+
+      html += `</svg>`;
+
+      // Legend on the side
+      html += `<div class="donut-labels">`;
+      data.forEach((d, i) => {
+        const pct = Math.round(100 * d.value / total);
+        html += `<div class="donut-label-row">
+      <div class="donut-label-dot" style="background:${colors[i]}"></div>
+      <div class="donut-label-name">${esc(d.label)}</div>
+      <div class="donut-label-pct">${pct}%</div>
+    </div>`;
+      });
+      html += `</div></div>`;
+
+      container.innerHTML = html;
+
+      // Tooltip on arcs
+      container.querySelectorAll('.donut-arc').forEach(el => {
+        el.addEventListener('mousemove', e => showTip(e, el.dataset.tip));
+        el.addEventListener('mouseleave', hideTip);
+        el.addEventListener('mouseenter', () => { el.style.opacity = '1'; el.style.transform = 'scale(1.03)'; el.style.transformOrigin = `${cx}px ${cy}px`; });
+        el.addEventListener('mouseleave', () => { el.style.opacity = '0.92'; el.style.transform = ''; });
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CHART: AREA + LINE (for time series / continuous data)
+       Best for: trends over time (Tableau best practice)
+    ══════════════════════════════════════════════════════════════════════ */
+    function areaLineChart(container, labels, values, color, opts = {}) {
+      const W = container.clientWidth || 600;
+      const H = opts.h || 220;
+      const padL = 42, padR = 12, padT = 18, padB = 28;
+      const cW = W - padL - padR, cH = H - padT - padB;
+
+      const maxVal = Math.max(...values);
+      const minVal = Math.min(...values);
+      const span = maxVal - minVal || 1;
+      const scaleMin = Math.max(0, minVal - span * 0.3);
+      const { max } = niceScale(maxVal, 4);
+      const { step } = niceScale(maxVal - scaleMin, 4);
+
+      const sx = i => padL + (i / (labels.length - 1)) * cW;
+      const sy = v => padT + cH - ((v - scaleMin) / (max - scaleMin)) * cH;
+
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': opts.aria || '' });
+
+      // Grid & axis labels
+      for (let v = Math.ceil(scaleMin / step) * step; v <= max + 1e-9; v += step) {
+        const y = sy(v);
+        const gl = svgEl('line', { class: 'grid-line', x1: padL, x2: W - padR, y1: y, y2: y });
+        svg.appendChild(gl);
+        const lbl = svgEl('text', { class: 'axis-lbl', x: padL - 5, y: y + 4, 'text-anchor': 'end' });
+        lbl.textContent = f2(v);
+        svg.appendChild(lbl);
+      }
+      // X axis
+      svg.appendChild(svgEl('line', { class: 'ax-line', x1: padL, x2: W - padR, y1: padT + cH, y2: padT + cH }));
+
+      // X labels (every 2h for 24h data)
+      labels.forEach((lbl, i) => {
+        if (i % 2 !== 0) return;
+        const x = sx(i);
+        const t = svgEl('text', { class: 'axis-lbl', x, y: H - 6, 'text-anchor': 'middle' });
+        t.textContent = lbl;
+        svg.appendChild(t);
+      });
+
+      // Area path
+      const pts = values.map((v, i) => `${sx(i)},${sy(v)}`).join(' L');
+      const areaD = `M${sx(0)},${padT + cH} L${pts} L${sx(values.length - 1)},${padT + cH} Z`;
+      const areaPath = svgEl('path', { d: areaD, fill: color, class: 'area-path' });
+      svg.appendChild(areaPath);
+
+      // Line path
+      const lineD = `M${pts.replace(/ L/g, ' L')}`.replace(/^/, 'M').split(' L').map((p, i) => i === 0 ? `M${p}` : `L${p}`).join(' ');
+      const linePath = svgEl('path', { d: `M${pts}`, class: 'area-line', stroke: color });
+      svg.appendChild(linePath);
+
+      // Find best hour(s)
+      const bestVal = Math.max(...values);
+
+      // Dots
+      values.forEach((v, i) => {
+        const cx2 = sx(i), cy2 = sy(v);
+        const isBest = v === bestVal;
+        const dot = svgEl('circle', {
+          cx: cx2, cy: cy2, r: isBest ? 5 : 3.5,
+          fill: isBest ? color : 'var(--surface)',
+          stroke: color, 'stroke-width': isBest ? 0 : 1.5
+        });
+        const hitArea = svgEl('rect', {
+          x: cx2 - 10, y: padT, width: 20, height: cH + padB,
+          fill: 'transparent', style: 'cursor:default'
+        });
+        hitArea.addEventListener('mousemove', e => showTip(e,
+          `<strong>${labels[i]}:00 h</strong>${D.horas[i].publicaciones} publicaciones<br>${D.horas[i].interacciones} interacciones<br><b>${f2(v)}</b> por publicación${isBest ? ' · 🏆 mejor hora' : ''}`
+        ));
+        hitArea.addEventListener('mouseleave', hideTip);
+        svg.appendChild(hitArea);
+        svg.appendChild(dot);
+        if (isBest) {
+          const lbl2 = svgEl('text', { x: cx2, y: cy2 - 10, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: color });
+          lbl2.textContent = f2(v);
+          svg.appendChild(lbl2);
+        }
+      });
+
+      container.innerHTML = '';
+      container.appendChild(svg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CHART: GROUPED BAR CHART
+       Best for: comparing multiple measures across categories (Tableau)
+    ══════════════════════════════════════════════════════════════════════ */
+    function groupedBarChart(container, cats, series, opts = {}) {
+      const W = container.clientWidth || 550;
+      const H = opts.h || 240;
+      const padL = 44, padR = 12, padT = 20, padB = 38;
+      const cW = W - padL - padR, cH = H - padT - padB;
+
+      const allVals = series.flatMap(s => s.values);
+      const { max, step } = niceScale(Math.max(...allVals), 4);
+      const sy = v => cH - (v / max) * cH;
+
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': opts.aria || '' });
+
+      // Grid
+      for (let v = 0; v <= max + 1e-9; v += step) {
+        const y = padT + sy(v);
+        svg.appendChild(svgEl('line', { class: 'grid-line', x1: padL, x2: W - padR, y1: y, y2: y }));
+        const lbl = svgEl('text', { class: 'axis-lbl', x: padL - 5, y: y + 4, 'text-anchor': 'end' });
+        lbl.textContent = f0(v);
+        svg.appendChild(lbl);
+      }
+      svg.appendChild(svgEl('line', { class: 'ax-line', x1: padL, x2: W - padR, y1: padT + cH, y2: padT + cH }));
+
+      const slot = cW / cats.length;
+      const n = series.length;
+      const bw = Math.min(30, (slot * 0.8) / n - 2);
+
+      cats.forEach((cat, i) => {
+        const gx = padL + slot * i + (slot - (bw * n + (n - 1) * 3)) / 2;
+
+        // Category label
+        const lbl = svgEl('text', {
+          class: 'axis-lbl', x: padL + slot * i + slot / 2, y: H - padB + 14,
+          'text-anchor': 'middle', 'font-size': 11
+        });
+        lbl.textContent = cat.length > 12 ? cat.slice(0, 11) + '…' : cat;
+        svg.appendChild(lbl);
+
+        series.forEach((s, k) => {
+          const x = gx + k * (bw + 3);
+          const barH = Math.max(sy(max) - sy(s.values[i]), 1);
+          const barY = padT + sy(s.values[i]);
+          const path = svgEl('path', {
+            d: roundedRectPath(x, barY, bw, barH, 3, 3, 0, 0),
+            fill: COLORS[k] || COLORS[0], opacity: 0.9
+          });
+
+          // Value label on top
+          if (opts.valueLabels) {
+            const vl = svgEl('text', {
+              class: 'val-lbl', x: x + bw / 2, y: barY - 4,
+              'text-anchor': 'middle', 'font-size': 9.5, 'font-weight': 600
+            });
+            vl.textContent = f0(s.values[i]);
+            svg.appendChild(vl);
+          }
+
+          const hitArea = svgEl('rect', {
+            x, y: padT, width: bw, height: cH,
+            fill: 'transparent', style: 'cursor:default'
+          });
+          const tipHtml = opts.tip ? opts.tip(i, k) : `<strong>${cat}</strong>${s.name}: ${f0(s.values[i])}`;
+          hitArea.addEventListener('mousemove', e => showTip(e, tipHtml));
+          hitArea.addEventListener('mouseleave', hideTip);
+
+          svg.appendChild(path);
+          svg.appendChild(hitArea);
+        });
+      });
+
+      container.innerHTML = '';
+      container.appendChild(svg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       CHART: HORIZONTAL BAR (single series, for rankings/comparisons)
+    ══════════════════════════════════════════════════════════════════════ */
+    function hSingleBar(container, rows, color, opts = {}) {
+      const W = container.clientWidth || 320;
+      const rowH = 24, gap = 8, padT = 4;
+      const labelW = Math.min(130, W * 0.42), padR = 46;
+      const chartW = W - labelW - padR;
+      const H = padT + rows.length * (rowH + gap);
+
+      const maxVal = Math.max(...rows.map(r => r.value));
+      const { max } = niceScale(maxVal, 4);
+      const sx = v => (v / max) * chartW;
+
+      const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': opts.aria || '' });
+      svg.appendChild(svgEl('line', { class: 'ax-line', x1: labelW, x2: labelW, y1: padT, y2: H }));
+
+      rows.forEach((row, i) => {
+        const y = padT + i * (rowH + gap);
+        const bh = 16, by = y + (rowH - bh) / 2;
+        const bw = sx(row.value);
+
+        const lbl = svgEl('text', { class: 'bar-lbl', x: labelW - 7, y: y + rowH / 2 + 4, 'text-anchor': 'end', 'font-size': 11.5 });
+        lbl.textContent = row.label.length > 18 ? row.label.slice(0, 17) + '…' : row.label;
+
+        const bar = svgEl('path', { d: roundedRectPath(labelW, by, Math.max(bw, 2), bh, 0, 4, 4, 0), fill: color });
+        const vl = svgEl('text', { class: 'val-lbl', x: labelW + bw + 5, y: y + rowH / 2 + 4, 'font-size': 11 });
+        vl.textContent = opts.fmt ? opts.fmt(row.value) : f0(row.value);
+
+        const hit = svgEl('rect', { class: 'row-hit', x: 0, y, width: W, height: rowH });
+        if (row.tip) {
+          hit.addEventListener('mousemove', e => showTip(e, row.tip));
+          hit.addEventListener('mouseleave', hideTip);
+        }
+
+        svg.appendChild(hit);
+        svg.appendChild(lbl);
+        svg.appendChild(bar);
+        svg.appendChild(vl);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(svg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       TOGGLE helper (chart ↔ table)
+    ══════════════════════════════════════════════════════════════════════ */
+    function setupToggle(btnId, chartId, tblId, redrawFn) {
+      const btn = $(btnId), ch = $(chartId), tbl = $(tblId);
+      if (!btn || !ch || !tbl) return;
+      btn.onclick = () => {
+        const showingTable = !tbl.classList.contains('hidden');
+        if (showingTable) {
+          tbl.classList.add('hidden'); ch.classList.remove('hidden');
+          btn.textContent = 'Ver tabla';
+          if (redrawFn) redrawFn();
+        } else {
+          tbl.classList.remove('hidden'); ch.classList.add('hidden');
+          btn.textContent = 'Ver gráfico';
+        }
+      };
+    }
+
+    /* ─── Simple table builder ──────────────────────────────────────── */
+    function buildTable(headers, rows) {
+      const ths = headers.map((h, i) => `<th class="${i > 0 ? 'num' : ''}">${esc(h)}</th>`).join('');
+      const trs = rows.map(r => `<tr>${r.map((c, i) => `<td class="${i > 0 ? 'num' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('');
+      return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       RENDER ALL
+    ══════════════════════════════════════════════════════════════════════ */
+    function renderAll() {
+      const C = D.conteos;
+      const inter = C.reacciones + C.comentarios;
+      const catTop = D.categorias[0];
+      const frTop = D.franjas[0];
+      const colors = getColors();
+
+      /* ── KPIs ──────────────────────────────────────────────────────── */
+      const kpiData = [
+        { val: f0(Object.values(C).reduce((a, b) => a + b, 0)), label: 'documentos en 5 colecciones', cls: 'c1' },
+        { val: f0(inter), label: 'interacciones totales', cls: 'c2' },
+        { val: f2(inter / C.publicaciones), label: 'interacciones por publicación', cls: 'c3' },
+        { val: catTop.categoria, label: 'categoría con mayor promedio', cls: 'c4' },
+        { val: frTop.franja.split(' ')[0], label: 'mejor franja horaria', cls: 'c5' },
+      ];
+      $('kpi-grid').innerHTML = kpiData.map(k => `
+    <div class="kpi">
+      <div class="kpi-value${k.val.length > 10 ? ' sm' : ''}">${esc(k.val)}</div>
+      <div class="kpi-label">${esc(k.label)}</div>
+    </div>
+  `).join('');
+
+      /* ── 1. Usuarios activos: stacked bar ──────────────────────────── */
+      const ua = D.usuarios_activos;
+      const P = D.pesos;
+      $('sub-activos').innerHTML = `<b>${esc(ua[0].nombre)}</b> (${esc(ua[0].pais)}) lidera con ${ua[0].indice_actividad} puntos. La actividad está muy repartida: solo 4 puntos de diferencia entre el 1.° y el 10.°`;
+
+      const activosRows = ua.map(u => ({
+        label: u.nombre,
+        parts: [u.publicaciones * P.publicaciones, u.comentarios * P.comentarios, u.reacciones * P.reacciones],
+        tip: `<strong>${esc(u.nombre)}</strong>${esc(u.usuario_id)} · ${esc(u.pais)} · ${esc(u.dispositivo)}<br>${u.publicaciones} publicaciones · ${u.comentarios} comentarios · ${u.reacciones} reacciones<br><b>Índice ${u.indice_actividad}</b>`
+      }));
+
+      const drawActivos = () => hStackedBar($('ch-activos'), activosRows, [colors[0], colors[1], colors[2]], { aria: 'Top 10 usuarios más activos' });
+      drawActivos();
+      $('tbl-activos').innerHTML = buildTable(
+        ['Usuario', 'País', 'Dispositivo', 'Publ.', 'Coment.', 'Reacc.', 'Índice'],
+        ua.map(u => [u.nombre + ' (' + u.usuario_id + ')', u.pais, u.dispositivo, u.publicaciones, u.comentarios, u.reacciones, u.indice_actividad])
+      );
+      setupToggle('btn-activos', 'ch-activos', 'tbl-activos', drawActivos);
+
+      /* ── 2a. Contenido popular: stacked bar ────────────────────────── */
+      const cp = D.contenido_popular;
+      $('sub-popular').innerHTML = `<b>${cp[0].publicacion_id}</b> (${esc(cp[0].categoria)} · ${esc(cp[0].tipo)}) suma ${cp[0].interacciones} interacciones. El top 10 oscila entre ${cp[9].interacciones} y ${cp[0].interacciones}.`;
+
+      const popRows = cp.map(p => ({
+        label: `${p.publicacion_id} · ${p.categoria}`,
+        parts: [p.reacciones, p.comentarios],
+        tip: `<strong>${esc(p.publicacion_id)}</strong>${esc(p.categoria)} · ${esc(p.tipo)}<br>Autor: ${esc(p.autor)}<br>${p.reacciones} reacciones · ${p.comentarios} comentarios<br>${p.likes_en_comentarios} likes en comentarios`
+      }));
+
+      const drawPopular = () => hStackedBar($('ch-popular'), popRows, [colors[0], colors[1]], { aria: 'Publicaciones más populares' });
+      drawPopular();
+      $('tbl-popular').innerHTML = buildTable(
+        ['Publicación', 'Categoría', 'Tipo', 'Reacc.', 'Coment.', 'Likes coment.'],
+        cp.map(p => [p.publicacion_id, p.categoria, p.tipo, p.reacciones, p.comentarios, p.likes_en_comentarios])
+      );
+      setupToggle('btn-popular', 'ch-popular', 'tbl-popular', drawPopular);
+
+      /* ── 2b. Categorías: single horizontal bar ─────────────────────── */
+      const ct = D.categorias;
+      $('sub-cat').innerHTML = `<b>${esc(ct[0].categoria)}</b> lidera con ${f2(ct[0].promedio_por_publicacion)} interacciones/publicación. La diferencia entre categorías es pequeña (~0,24 puntos).`;
+
+      const catRows = ct.map((c, i) => ({
+        label: c.categoria,
+        value: c.promedio_por_publicacion,
+        tip: `<strong>${esc(c.categoria)}</strong>${c.publicaciones} publicaciones<br>${c.interacciones} interacciones<br>Promedio: <b>${f2(c.promedio_por_publicacion)}</b>`
+      }));
+
+      const drawCat = () => hSingleBar($('ch-cat'), catRows, colors[0], { aria: 'Interacciones por categoría', fmt: f2 });
+      drawCat();
+      $('tbl-cat').innerHTML = buildTable(
+        ['Categoría', 'Publicaciones', 'Interacciones', 'Promedio'],
+        ct.map(c => [c.categoria, c.publicaciones, c.interacciones, f2(c.promedio_por_publicacion)])
+      );
+      setupToggle('btn-cat', 'ch-cat', 'tbl-cat', drawCat);
+
+      /* ── 2c. Reacciones: donut chart ────────────────────────────────── */
+      const rt = D.reacciones_tipo;
+      const rtTotal = rt.reduce((a, r) => a + r.cantidad, 0);
+      const negPct = Math.round(100 * (rt.filter(r => /entristece|enoja/.test(r.tipo_reaccion)).reduce((a, r) => a + r.cantidad, 0)) / rtTotal);
+      $('sub-reac').innerHTML = `Las reacciones negativas ("Me entristece" + "Me enoja") representan el <b>${negPct}%</b> del total.`;
+
+      const reacColors = [colors[3], colors[4], colors[0], colors[2]];
+      const drawReac = () => donutChart($('ch-reac'),
+        rt.map(r => ({ label: r.tipo_reaccion, value: r.cantidad })),
+        reacColors,
+        { aria: 'Distribución de reacciones', centerLabel: 'reacciones', size: 150 }
+      );
+      drawReac();
+      $('tbl-reac').innerHTML = buildTable(
+        ['Tipo', 'Cantidad', '%'],
+        rt.map(r => [r.tipo_reaccion, r.cantidad, Math.round(100 * r.cantidad / rtTotal) + '%'])
+      );
+      setupToggle('btn-reac', 'ch-reac', 'tbl-reac', drawReac);
+
+      /* ── Tipos de contenido (barras donut aproximado) ──────────────── */
+      // Derive from popular data (Texto / Video / Imagen)
+      const tipoCounts = {};
+      D.contenido_popular.forEach(p => { tipoCounts[p.tipo] = (tipoCounts[p.tipo] || 0) + 1; });
+      // Since we only have top 10, show as proportion of what we know
+      const tipoArr = Object.entries(tipoCounts).map(([t, n]) => ({ label: t, value: n }));
+      donutChart($('tipo-contenido-chart'), tipoArr, [colors[2], colors[0], colors[1]],
+        { aria: 'Tipos de contenido', centerLabel: 'publicaciones', size: 140 }
+      );
+
+      /* ── 3. Horarios: area+line ─────────────────────────────────────── */
+      const hs = D.horas;
+      $('sub-horas').innerHTML = `La franja <b>${esc(frTop.franja)}</b> obtiene el mayor promedio (${f2(frTop.interacciones_por_publicacion)} por publicación). Con ~20 publicaciones por hora, lee la tendencia, no los picos individuales.`;
+
+      const drawHoras = () => areaLineChart(
+        $('ch-horas'),
+        hs.map(h => h.hora),
+        hs.map(h => h.interacciones_por_publicacion),
+        colors[0],
+        { aria: 'Interacciones por hora', h: 220 }
+      );
+      drawHoras();
+      $('tbl-horas').innerHTML = buildTable(
+        ['Hora', 'Publicaciones', 'Interacciones', 'Por publicación'],
+        hs.map(h => [h.hora + ':00', h.publicaciones, h.interacciones, f2(h.interacciones_por_publicacion)])
+      );
+      setupToggle('btn-horas', 'ch-horas', 'tbl-horas', drawHoras);
+
+      // Franjas tiles
+      $('franjas-row').innerHTML = D.franjas.map((f, i) => `
+    <div class="franja-tile ${i === 0 ? 'best' : ''}">
+      <div class="ft-val">${f2(f.interacciones_por_publicacion)}</div>
+      <div class="ft-name">${esc(f.franja)}${i === 0 ? ' · mejor' : ''}</div>
+    </div>
+  `).join('');
+
+      /* ── 4. Campañas: grouped bar + table ───────────────────────────── */
+      const co = D.campanas_objetivo;
+      $('sub-metas').innerHTML = `Las ${co.reduce((a, c) => a + c['campañas'], 0)} campañas se dividen casi por igual entre los tres objetivos y tienen metas muy similares (≈555 likes, 270 comentarios, 162 compartidos).`;
+
+      const drawMetas = () => groupedBarChart(
+        $('ch-metas'),
+        co.map(c => c.objetivo.replace('Captar nuevos usuarios', 'Captar usuarios')),
+        [
+          { name: 'Likes', values: co.map(c => c.meta_likes_prom) },
+          { name: 'Comentarios', values: co.map(c => c.meta_comentarios_prom) },
+          { name: 'Compartidos', values: co.map(c => c.meta_compartidos_prom) }
+        ],
+        {
+          aria: 'Metas por objetivo', valueLabels: true, h: 240,
+          tip: (i, k) => {
+            const names = ['Likes', 'Comentarios', 'Compartidos'];
+            const vals = [co[i].meta_likes_prom, co[i].meta_comentarios_prom, co[i].meta_compartidos_prom];
+            return `<strong>${esc(co[i].objetivo)}</strong>${co[i]['campañas']} campañas<br>${names[k]}: <b>${f0(vals[k])}</b>`;
+          }
+        }
+      );
+      drawMetas();
+      $('tbl-metas').innerHTML = buildTable(
+        ['Objetivo', 'Campañas', 'Likes prom.', 'Coment. prom.', 'Compart. prom.'],
+        co.map(c => [c.objetivo, c['campañas'], f0(c.meta_likes_prom), f0(c.meta_comentarios_prom), f0(c.meta_compartidos_prom)])
+      );
+      setupToggle('btn-metas', 'ch-metas', 'tbl-metas', drawMetas);
+
+      /* ── Top campañas ─────────────────────────────────────────────── */
+      const ctp = D.campanas_top;
+      const maxPct = Math.max(...ctp.map(c => c.cumplimiento_pct));
+      $('sub-camptop').innerHTML = `La mejor campaña alcanza <b>${f2(maxPct)}%</b> de su meta (likes + comentarios). El bajo porcentaje refleja el tamaño pequeño del dataset (500 docs/colección), no un fracaso de las campañas.`;
+
+      const objColors = { 'Promover contenido': colors[2], 'Captar nuevos usuarios': colors[0], 'Aumentar engagement': colors[1] };
+      $('tbl-camptop').innerHTML = `<table>
+    <thead><tr>
+      <th>Campaña</th><th>Objetivo</th>
+      <th class="num">Publ.</th><th class="num">Interacc.</th>
+      <th class="num">Meta</th><th class="num">% meta</th>
+    </tr></thead>
+    <tbody>${ctp.map(c => `<tr>
+      <td>${esc(c.nombre)}</td>
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${objColors[c.objetivo] || colors[3]};margin-right:5px;"></span>${esc(c.objetivo)}</td>
+      <td class="num">${c.publicaciones}</td>
+      <td class="num">${c.interacciones_observadas}</td>
+      <td class="num">${f0(c.meta_likes_mas_comentarios)}</td>
+      <td class="num"><b>${f2(c.cumplimiento_pct)}%</b></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+
+      /* ── 5. Audiencia ───────────────────────────────────────────────── */
+      const A = D.audiencia;
+      const dispColors = [colors[0], colors[1], colors[2]];
+      const genColors = [colors[3], colors[0], colors[4]];
+      const paisColors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[0], colors[1], colors[2]];
+
+      function renderAudienceCard(containerId, data, keyField, colors2) {
+        const total = data.reduce((a, d) => a + d.usuarios, 0);
+        let html = `<div class="audience-bar">`;
+        data.forEach((d, i) => {
+          html += `<div class="audience-bar-seg" style="flex:${d.usuarios};background:${colors2[i]}" title="${esc(d[keyField])}: ${d.usuarios}"></div>`;
+        });
+        html += `</div><div class="audience-rows">`;
+        data.forEach((d, i) => {
+          const pct = Math.round(100 * d.usuarios / total);
+          html += `<div class="audience-row">
+        <div class="audience-row-dot" style="background:${colors2[i]}"></div>
+        <div class="audience-row-name">${esc(d[keyField])}</div>
+        <div class="audience-row-num">${d.usuarios}</div>
+        <div class="audience-row-pct">${pct}%</div>
+      </div>`;
+        });
+        html += '</div>';
+        $(containerId).innerHTML = html;
+      }
+
+      $('sub-disp').innerHTML = `Dispositivo principal: <b>${esc(A.dispositivo[0].dispositivo)}</b> (${Math.round(100 * A.dispositivo[0].usuarios / C.usuarios)}%).`;
+      renderAudienceCard('ch-disp', A.dispositivo, 'dispositivo', dispColors);
+      renderAudienceCard('ch-gen', A.genero, 'genero', genColors);
+
+      // Países: horizontal bar
+      const drawPais = () => hSingleBar($('ch-pais'),
+        A.paises.map(p => ({
+          label: p.pais,
+          value: p.usuarios,
+          tip: `<strong>${esc(p.pais)}</strong>${p.usuarios} usuarios (${Math.round(100 * p.usuarios / C.usuarios)}%)`
+        })),
+        colors[3], { aria: 'Países con más usuarios' }
+      );
+      drawPais();
+
+      /* ── 6. Calidad de datos ─────────────────────────────────────────── */
+      const AUDIT_NAMES = {
+        publicaciones_con_usuario_inexistente: 'Publicaciones con usuario inexistente',
+        reacciones_con_usuario_o_publicacion_inexistente: 'Reacciones huérfanas',
+        comentarios_con_usuario_o_publicacion_inexistente: 'Comentarios huérfanos',
+        campañas_con_publicaciones_inexistentes: 'Campañas con publicaciones inexistentes',
+        reacciones_duplicadas_mismo_usuario_y_publicacion: 'Reacciones duplicadas (mismo usuario y publicación)',
+        usuarios_con_correo_duplicado: 'Usuarios con correo duplicado',
+        publicaciones_anteriores_al_registro_del_usuario: 'Publicaciones antes del registro del autor',
+        reacciones_anteriores_a_su_publicacion: 'Reacciones antes de la publicación',
+        comentarios_anteriores_a_su_publicacion: 'Comentarios antes de la publicación',
+        reacciones_anteriores_al_registro_del_usuario: 'Reacciones antes del registro del usuario',
+        comentarios_anteriores_al_registro_del_usuario: 'Comentarios antes del registro del usuario',
+        campañas_con_fin_anterior_al_inicio: 'Campañas con fin anterior al inicio',
+        comentarios_con_likes_invalidos: 'Comentarios con likes inválidos',
+      };
+      const auditEntries = Object.entries(D.auditoria);
+      const issues = auditEntries.filter(([, v]) => v > 0).length;
+      $('tbl-calidad').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:13px;font-weight:600;">Resultado de la auditoría</span>
+      <span class="pill ${issues === 0 ? 'ok' : 'warn'}">${issues === 0 ? 'Sin problemas' : issues + ' controles con alertas'}</span>
+    </div>
+    <table>
+      <thead><tr><th>Control de integridad</th><th class="num">Casos</th><th>Estado</th></tr></thead>
+      <tbody>${auditEntries.map(([k, v]) => `
+        <tr>
+          <td>${esc(AUDIT_NAMES[k] || k)}</td>
+          <td class="num"><b>${v}</b></td>
+          <td><span class="audit-chip ${v === 0 ? 'ok' : 'warn'}">${v === 0 ? 'OK' : 'Revisar'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+    }
+
+    /* ─── Initial render ────────────────────────────────────────────── */
+    renderAll();
+
+    /* ─── Responsive rerender ───────────────────────────────────────── */
+    let resizeTimer;
+    let lastW = 0;
+    const ro = new ResizeObserver(() => {
+      const w = document.body.clientWidth;
+      if (w === lastW) return;
+      lastW = w;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderAll, 150);
     });
-    const label = r.label.length > 24 ? r.label.slice(0, 23) + "…" : r.label;
-    g += `<g class="row" data-i="${i}"><rect class="hit" x="0" y="${y}" width="${W}" height="${rowH}"/>` +
-         `<text x="${padL - 8}" y="${y + rowH / 2 + 4}" text-anchor="end">${esc(label)}</text>${segs}` +
-         `<text class="val" x="${x + 6}" y="${y + rowH / 2 + 4}">${o.fmt ? o.fmt(total) : nf.format(total)}</text></g>`;
-  });
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || "")}">${g}</svg>`;
-  box.querySelectorAll(".row").forEach((el) => {
-    const r = rows[+el.dataset.i];
-    el.addEventListener("mousemove", (e) => showTip(e, r.tip));
-    el.addEventListener("mouseleave", hideTip);
-  });
-}
+    ro.observe(document.body);
 
-/* ---------- columnas verticales (simples o agrupadas) ---------- */
-function colv(box, cats, series, o = {}) {
-  const W = Math.max(box.clientWidth, 300), H = o.h || 250;
-  const padL = 40, padB = 26, padT = 18, padR = 6;
-  const { max, step } = niceScale(Math.max(...series.flatMap((s) => s.values)) * (o.valueLabels ? 1.08 : 1));
-  const ph = H - padT - padB, pw = W - padL - padR, sy = (v) => (v / max) * ph;
-  let g = "";
-  for (let v = 0; v <= max + 1e-9; v += step) {
-    const y = padT + ph - sy(v);
-    g += `<line class="grid-l" x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}"/><text x="${padL - 6}" y="${y + 4}" text-anchor="end">${nf.format(+v.toFixed(2))}</text>`;
-  }
-  const slot = pw / cats.length, n = series.length;
-  const bw = Math.min(26, (slot * 0.7 - (n - 1) * 2) / n);
-  cats.forEach((c, i) => {
-    const gx = padL + slot * i + (slot - (bw * n + (n - 1) * 2)) / 2;
-    let bars = "";
-    series.forEach((s, k) => {
-      const h = sy(s.values[i]), x = gx + k * (bw + 2);
-      bars += `<path d="${barPath(x, padT + ph - h, bw, h, 4, "up")}" style="fill:${series.length === 1 ? SV[0] : SV[k]}"/>`;
-      if (o.valueLabels && h > 0) bars += `<text class="val" x="${x + bw / 2}" y="${padT + ph - h - 4}" text-anchor="middle">${o.fmt ? o.fmt(s.values[i]) : s.values[i]}</text>`;
+    /* ─── Theme toggle ──────────────────────────────────────────────── */
+    const html = document.documentElement;
+    let isDark = true;
+    try { isDark = localStorage.getItem('cf-theme') !== 'light'; } catch (e) { }
+    function applyTheme() {
+      html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      $('themeBtn').textContent = isDark ? 'Tema claro' : 'Tema oscuro';
+      renderAll();
+    }
+    applyTheme();
+    $('themeBtn').addEventListener('click', () => {
+      isDark = !isDark;
+      try { localStorage.setItem('cf-theme', isDark ? 'dark' : 'light'); } catch (e) { }
+      applyTheme();
     });
-    const show = !o.every || i % o.every === 0;
-    g += `<g class="row" data-i="${i}"><rect class="hit" x="${padL + slot * i}" y="${padT}" width="${slot}" height="${ph}"/>${bars}` +
-         (show ? `<text x="${padL + slot * i + slot / 2}" y="${H - 8}" text-anchor="middle">${esc(c)}</text>` : "") + `</g>`;
-  });
-  g += `<line class="base" x1="${padL}" x2="${W - padR}" y1="${padT + ph}" y2="${padT + ph}"/>`;
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || "")}">${g}</svg>`;
-  box.querySelectorAll(".row").forEach((el) => {
-    const i = +el.dataset.i;
-    el.addEventListener("mousemove", (e) => showTip(e, o.tip(i)));
-    el.addEventListener("mouseleave", hideTip);
-  });
-}
 
-/* ---------- tarjetas con vista de tabla ---------- */
-const redraws = [];
-function card(id, { title, take, legend, draw, head, rows }) {
-  const el = $(id);
-  const lg = legend ? `<div class="legend">${legend.map((l, k) => `<span><i style="background:${SV[k]}"></i>${esc(l)}</span>`).join("")}</div>` : "";
-  const tb = `<table><thead><tr>${head.map((h, k) => `<th class="${k ? "n" : ""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
-    rows.map((r) => `<tr>${r.map((c, k) => `<td class="${k ? "n" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
-  el.innerHTML = `<div class="top"><h3>${esc(title)}</h3><button class="tbtn" type="button" aria-pressed="false">Ver tabla</button></div>` +
-    `<p class="take">${take}</p>${lg}<div class="chart"></div><div class="tbl hidden">${tb}</div>`;
-  const chart = el.querySelector(".chart"), tbl = el.querySelector(".tbl"), btn = el.querySelector(".tbtn");
-  btn.addEventListener("click", () => {
-    const on = tbl.classList.toggle("hidden") === false;
-    chart.classList.toggle("hidden", on);
-    btn.textContent = on ? "Ver gráfico" : "Ver tabla"; btn.setAttribute("aria-pressed", on);
-    if (!on) draw(chart);
-  });
-  draw(chart); redraws.push(() => { if (!chart.classList.contains("hidden")) draw(chart); });
-}
-
-/* ---------- datos derivados ---------- */
-const C = D.conteos;
-const inter = C.reacciones + C.comentarios;
-const catTop = D.categorias[0], frTop = D.franjas[0];
-$("kpis").innerHTML = [
-  [nf.format(Object.values(C).reduce((a, b) => a + b, 0)), "documentos en 5 colecciones"],
-  [nf.format(inter), "interacciones (reacciones + comentarios)"],
-  [f1.format(inter / C.publicaciones), "interacciones por publicación"],
-  [catTop.categoria, "categoría con más interacciones por publicación"],
-  [frTop.franja.split(" ")[0], "franja con más interacciones por publicación"],
-].map(([v, l]) => `<div class="kpi"><div class="v" style="${v.length > 9 ? "font-size:19px;padding:5px 0" : ""}">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("");
-
-/* 1 · usuarios activos */
-const P = D.pesos, ua = D.usuarios_activos;
-$("lead-activos").innerHTML = `Índice de actividad = ${P.publicaciones}·publicaciones + ${P.comentarios}·comentarios + ${P.reacciones}·reacciones (ponderación del equipo: crear contenido pesa más que reaccionar). El largo de cada color es su aporte al índice.`;
-card("c-activos", {
-  title: "Top 10 usuarios por índice de actividad",
-  take: `<b>${esc(ua[0].nombre)}</b> (${esc(ua[0].pais)}) lidera con ${ua[0].indice_actividad} puntos; el décimo tiene ${ua[9].indice_actividad}. La actividad está muy repartida: nadie domina.`,
-  legend: ["Publicaciones ×3", "Comentarios ×2", "Reacciones ×1"],
-  draw: (b) => hbar(b, ua.map((u) => ({
-    label: `${u.nombre}`, parts: [u.publicaciones * P.publicaciones, u.comentarios * P.comentarios, u.reacciones * P.reacciones],
-    tip: `<b>${esc(u.nombre)}</b>${esc(u.usuario_id)} · ${esc(u.pais)} · ${esc(u.dispositivo)}<br>${u.publicaciones} publicaciones · ${u.comentarios} comentarios · ${u.reacciones} reacciones<br><b>Índice ${u.indice_actividad}</b>`,
-  })), ["a", "b", "c"], { aria: "Top 10 de usuarios más activos" }),
-  head: ["Usuario", "País", "Publ.", "Coment.", "Reacc.", "Índice"],
-  rows: ua.map((u) => [`${u.nombre} (${u.usuario_id})`, u.pais, u.publicaciones, u.comentarios, u.reacciones, u.indice_actividad]),
-});
-
-/* 2 · contenido popular */
-const cp = D.contenido_popular;
-card("c-popular", {
-  title: "Top 10 publicaciones por interacciones",
-  take: `<b>${cp[0].publicacion_id}</b> (${esc(cp[0].categoria)}, ${esc(cp[0].tipo)}) suma ${cp[0].interacciones} interacciones; el rango del top 10 es acotado (${cp[9].interacciones}–${cp[0].interacciones}).`,
-  legend: ["Reacciones", "Comentarios"],
-  draw: (b) => hbar(b, cp.map((p) => ({
-    label: `${p.publicacion_id} · ${p.categoria}`, parts: [p.reacciones, p.comentarios],
-    tip: `<b>${p.publicacion_id}</b>${esc(p.categoria)} · ${esc(p.tipo)} · autor ${esc(p.autor)}<br>${p.reacciones} reacciones · ${p.comentarios} comentarios<br>${p.likes_en_comentarios} likes en sus comentarios`,
-  })), ["a", "b"], { aria: "Publicaciones más populares" }),
-  head: ["Publicación", "Categoría", "Tipo", "Reacc.", "Coment.", "Likes en coment."],
-  rows: cp.map((p) => [p.publicacion_id, p.categoria, p.tipo, p.reacciones, p.comentarios, p.likes_en_comentarios]),
-});
-const ct = D.categorias;
-card("c-categorias", {
-  title: "Interacciones por publicación, según categoría",
-  take: `<b>${esc(ct[0].categoria)}</b> lidera (${f1.format(ct[0].promedio_por_publicacion)}) y <b>${esc(ct[ct.length - 1].categoria)}</b> cierra (${f1.format(ct[ct.length - 1].promedio_por_publicacion)}). La diferencia es pequeña, no una tendencia firme.`,
-  draw: (b) => hbar(b, ct.map((c) => ({
-    label: c.categoria, parts: [c.promedio_por_publicacion], fmt: (v) => f1.format(v),
-    tip: `<b>${esc(c.categoria)}</b>${c.publicaciones} publicaciones<br>${c.interacciones} interacciones<br>Promedio ${f1.format(c.promedio_por_publicacion)}`,
-  })), ["a"], { aria: "Interacciones por publicación por categoría", min: 2.4 }),
-  head: ["Categoría", "Publicaciones", "Interacciones", "Promedio"],
-  rows: ct.map((c) => [c.categoria, c.publicaciones, c.interacciones, f1.format(c.promedio_por_publicacion)]),
-});
-const rt = D.reacciones_tipo, rtT = rt.reduce((a, r) => a + r.cantidad, 0);
-card("c-reacciones", {
-  title: "Reacciones por tipo",
-  take: `Las reacciones negativas (“Me entristece”, “Me enoja”) suman ${Math.round(100 * (rt.filter((r) => /entristece|enoja/.test(r.tipo_reaccion)).reduce((a, r) => a + r.cantidad, 0)) / rtT)}% del total.`,
-  draw: (b) => hbar(b, rt.map((r) => ({ label: r.tipo_reaccion, parts: [r.cantidad],
-    tip: `<b>${esc(r.tipo_reaccion)}</b>${r.cantidad} reacciones (${Math.round(100 * r.cantidad / rtT)}%)` })), ["a"], { aria: "Reacciones por tipo" }),
-  head: ["Tipo", "Cantidad", "%"], rows: rt.map((r) => [r.tipo_reaccion, r.cantidad, Math.round(100 * r.cantidad / rtT) + "%"]),
-});
-
-/* 3 · horarios */
-const hs = D.horas;
-card("c-horas", {
-  title: "Interacciones por publicación según la hora de publicación",
-  take: `La franja <b>${esc(frTop.franja)}</b> rinde más (${f1.format(frTop.interacciones_por_publicacion)} por publicación) y <b>${esc(D.franjas[3].franja)}</b> menos (${f1.format(D.franjas[3].interacciones_por_publicacion)}). Con ~20 publicaciones por hora, las barras individuales son ruidosas: léase la franja, no la hora.`,
-  draw: (b) => {
-    colv(b, hs.map((h) => h.hora), [{ values: hs.map((h) => h.interacciones_por_publicacion) }],
-      { aria: "Interacciones por publicación por hora", every: 1, tip: (i) => `<b>${hs[i].hora}:00 h</b>${hs[i].publicaciones} publicaciones<br>${hs[i].interacciones} interacciones<br>${f1.format(hs[i].interacciones_por_publicacion)} por publicación` });
-    const t = document.createElement("div"); t.className = "tiles";
-    t.innerHTML = D.franjas.map((f, i) => `<div class="tile ${i === 0 ? "mejor" : ""}"><b>${f1.format(f.interacciones_por_publicacion)}</b><span>${esc(f.franja)}${i === 0 ? " · mejor" : ""}</span></div>`).join("");
-    b.appendChild(t);
-  },
-  head: ["Hora", "Publicaciones", "Interacciones", "Por publicación"],
-  rows: hs.map((h) => [h.hora + ":00", h.publicaciones, h.interacciones, f1.format(h.interacciones_por_publicacion)]),
-});
-
-/* 4 · campañas */
-const co = D.campanas_objetivo;
-card("c-metas", {
-  title: "Metas promedio por objetivo de campaña",
-  take: `Las ${co.reduce((a, c) => a + c["campañas"], 0)} campañas se reparten casi por igual entre sus tres objetivos y fijan metas muy parecidas (≈ 555 likes, 270 comentarios, 160 compartidos).`,
-  legend: ["Likes", "Comentarios", "Compartidos"],
-  draw: (b) => colv(b, co.map((c) => c.objetivo.replace("Captar nuevos usuarios", "Captar usuarios")),
-    [{ values: co.map((c) => c.meta_likes_prom) }, { values: co.map((c) => c.meta_comentarios_prom) }, { values: co.map((c) => c.meta_compartidos_prom) }],
-    { aria: "Metas promedio por objetivo", valueLabels: true, fmt: (v) => Math.round(v), tip: (i) => `<b>${esc(co[i].objetivo)}</b>${co[i]["campañas"]} campañas<br>Likes ${co[i].meta_likes_prom}<br>Comentarios ${co[i].meta_comentarios_prom}<br>Compartidos ${co[i].meta_compartidos_prom}` }),
-  head: ["Objetivo", "Campañas", "Likes", "Coment.", "Compart."],
-  rows: co.map((c) => [c.objetivo, c["campañas"], c.meta_likes_prom, c.meta_comentarios_prom, c.meta_compartidos_prom]),
-});
-const ctp = D.campanas_top;
-(function () {
-  const el = $("c-camptop");
-  el.innerHTML = `<h3>Campañas con más engagement observado (top 10)</h3>` +
-    `<p class="take">La mejor alcanza <b>${f1.format(Math.max(...ctp.map((c) => c.cumplimiento_pct)))}%</b> de su meta (likes + comentarios). Es poco porque el dataset solo tiene ${nf.format(inter)} interacciones en total: refleja el tamaño de la muestra, no necesariamente el fracaso de las campañas.</p>` +
-    `<div class="tbl"><table><thead><tr><th>Campaña</th><th>Objetivo</th><th class="n">Publ.</th><th class="n">Interacc.</th><th class="n">Meta</th><th class="n">% meta</th></tr></thead><tbody>` +
-    ctp.map((c) => `<tr><td>${esc(c.nombre)}</td><td>${esc(c.objetivo)}</td><td class="n">${c.publicaciones}</td><td class="n">${c.interacciones_observadas}</td><td class="n">${c.meta_likes_mas_comentarios}</td><td class="n">${f1.format(c.cumplimiento_pct)}%</td></tr>`).join("") + `</tbody></table></div>`;
-})();
-
-/* 5 · audiencia */
-const A = D.audiencia;
-const mini = (id, titulo, filas, campo, take) => card(id, {
-  title: titulo, take,
-  draw: (b) => hbar(b, filas.map((r) => ({ label: r[campo], parts: [r.usuarios],
-    tip: `<b>${esc(r[campo])}</b>${r.usuarios} usuarios (${Math.round(100 * r.usuarios / C.usuarios)}%)` })), ["a"], { aria: titulo }),
-  head: [campo[0].toUpperCase() + campo.slice(1), "Usuarios"], rows: filas.map((r) => [r[campo], r.usuarios]),
-});
-mini("c-disp", "Usuarios por dispositivo", A.dispositivo, "dispositivo", `Dispositivo principal: <b>${esc(A.dispositivo[0].dispositivo)}</b> (${Math.round(100 * A.dispositivo[0].usuarios / C.usuarios)}%).`);
-mini("c-gen", "Usuarios por género", A.genero, "genero", `Distribución casi pareja entre los tres grupos.`);
-mini("c-pais", "Países con más usuarios (top 8)", A.paises, "pais", `Audiencia muy dispersa: el país líder tiene solo ${A.paises[0].usuarios} usuarios.`);
-
-/* 6 · calidad */
-const NOMBRES = {
-  publicaciones_con_usuario_inexistente: "Publicaciones con usuario inexistente", reacciones_con_usuario_o_publicacion_inexistente: "Reacciones huérfanas",
-  comentarios_con_usuario_o_publicacion_inexistente: "Comentarios huérfanos", campañas_con_publicaciones_inexistentes: "Campañas con publicaciones inexistentes",
-  reacciones_duplicadas_mismo_usuario_y_publicacion: "Reacciones duplicadas (mismo usuario y publicación)", usuarios_con_correo_duplicado: "Usuarios con correo repetido",
-  publicaciones_anteriores_al_registro_del_usuario: "Publicaciones anteriores al registro de su autor", reacciones_anteriores_a_su_publicacion: "Reacciones anteriores a su publicación",
-  comentarios_anteriores_a_su_publicacion: "Comentarios anteriores a su publicación", reacciones_anteriores_al_registro_del_usuario: "Reacciones anteriores al registro de su autor",
-  comentarios_anteriores_al_registro_del_usuario: "Comentarios anteriores al registro de su autor", campañas_con_fin_anterior_al_inicio: "Campañas con fin anterior al inicio",
-  comentarios_con_likes_invalidos: "Comentarios con likes inválidos",
-};
-$("c-calidad").innerHTML = `<div class="tbl"><table><thead><tr><th>Control</th><th class="n">Casos</th><th>Estado</th></tr></thead><tbody>` +
-  Object.entries(D.auditoria).map(([k, v]) => `<tr><td>${esc(NOMBRES[k] || k)}</td><td class="n">${v}</td><td>${v === 0 ? '<span class="ok">✓ Sin problemas</span>' : '<span class="warn">⚠ Revisar</span>'}</td></tr>`).join("") + `</tbody></table></div>`;
-
-$("nota").innerHTML = `<b>Cómo leer este panel.</b> Los datos son sintéticos y pequeños (500 documentos por colección), por lo que la mayoría de las diferencias entre categorías, horas y campañas son <b>tenues</b>. El valor del panel es mostrar que las consultas responden las preguntas del caso, no declarar “ganadores” definitivos.`;
-$("pie").innerHTML = `Fuente: ${esc(D.fuente)} · Generado el ${esc(D.generado)} · Reproducible con <code>python generar_dashboard.py</code>`;
-
-/* ---------- tema ---------- */
-const modos = ["auto", "light", "dark"], etiqueta = { auto: "automático", light: "claro", dark: "oscuro" };
-let modo = "auto";
-try { modo = localStorage.getItem("cf-tema") || "auto"; } catch (e) {}
-function aplicarTema() {
-  if (modo === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", modo);
-  $("tema").textContent = "Tema: " + etiqueta[modo];
-}
-$("tema").addEventListener("click", () => {
-  modo = modos[(modos.indexOf(modo) + 1) % 3];
-  try { localStorage.setItem("cf-tema", modo); } catch (e) {}
-  aplicarTema();
-});
-aplicarTema();
-let t; new ResizeObserver(() => { clearTimeout(t); t = setTimeout(() => redraws.forEach((f) => f()), 120); }).observe(document.body);
-</script>
+    /* ─── Pestañas ──────────────────────────────────────────────────── */
+    const tabBtns = [...document.querySelectorAll('[role="tab"]')];
+    function showTab(id, focus) {
+      tabBtns.forEach(t => {
+        const on = t.dataset.tab === id;
+        t.setAttribute('aria-selected', on);
+        t.tabIndex = on ? 0 : -1;
+        $(t.dataset.tab).hidden = !on;
+        if (on && focus) t.focus();
+      });
+      try { history.replaceState(null, '', '#' + id); } catch (e) { }
+      renderAll(); // los gráficos se miden con el panel ya visible
+    }
+    tabBtns.forEach((t, i) => {
+      t.addEventListener('click', () => showTab(t.dataset.tab));
+      t.addEventListener('keydown', e => {
+        const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        if (!d) return;
+        e.preventDefault();
+        showTab(tabBtns[(i + d + tabBtns.length) % tabBtns.length].dataset.tab, true);
+      });
+    });
+    const startTab = location.hash.slice(1);
+    showTab(tabBtns.some(t => t.dataset.tab === startTab) ? startTab : 'kpis');
+  </script>
 </body>
+
 </html>
