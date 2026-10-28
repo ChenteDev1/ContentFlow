@@ -5,9 +5,9 @@
       "descripcion": "documento completo",
       "documentos": 58,
       "bytes": 11168,
-      "ms_mediana": 200.88,
-      "ms_min": 190.53,
-      "ms_max": 207.93,
+      "ms_mediana": 192.29,
+      "ms_min": 189.26,
+      "ms_max": 209.93,
       "ru": 14.83,
       "repeticiones": 5
     },
@@ -15,13 +15,13 @@
       "descripcion": "solo nombre, correo, país",
       "documentos": 58,
       "bytes": 5090,
-      "ms_mediana": 187.46,
-      "ms_min": 187.05,
-      "ms_max": 193.86,
+      "ms_mediana": 189.59,
+      "ms_min": 187.98,
+      "ms_max": 193.37,
       "ru": 15.64,
       "repeticiones": 5
     },
-    "mejora_tiempo_pct": 6.7
+    "mejora_tiempo_pct": 1.4
   },
   {
     "titulo": "E2 · Tamaño de lote al leer 500 campañas",
@@ -29,9 +29,9 @@
       "descripcion": "lote por defecto (101)",
       "documentos": 500,
       "bytes": 33593,
-      "ms_mediana": 372.54,
-      "ms_min": 360.46,
-      "ms_max": 921.15,
+      "ms_mediana": 354.34,
+      "ms_min": 352.4,
+      "ms_max": 424.28,
       "ru": 16.95,
       "repeticiones": 5
     },
@@ -39,13 +39,13 @@
       "descripcion": "batch_size=500",
       "documentos": 500,
       "bytes": 33593,
-      "ms_mediana": 172.36,
-      "ms_min": 168.44,
-      "ms_max": 182.48,
+      "ms_mediana": 174.52,
+      "ms_min": 174.02,
+      "ms_max": 176.48,
       "ru": 20.66,
       "repeticiones": 5
     },
-    "mejora_tiempo_pct": 53.7
+    "mejora_tiempo_pct": 50.7
   },
   {
     "titulo": "E3 · Índice compuesto para el filtro de la consulta 1",
@@ -53,9 +53,9 @@
       "descripcion": "sin índice (recorre la colección)",
       "documentos": 58,
       "bytes": 5090,
-      "ms_mediana": 186.75,
-      "ms_min": 185.32,
-      "ms_max": 193.46,
+      "ms_mediana": 189.92,
+      "ms_min": 189.08,
+      "ms_max": 191.72,
       "ru": 15.64,
       "repeticiones": 5
     },
@@ -63,13 +63,13 @@
       "descripcion": "índice {dispositivo, genero}",
       "documentos": 58,
       "bytes": 5090,
-      "ms_mediana": 168.36,
-      "ms_min": 163.76,
-      "ms_max": 170.18,
+      "ms_mediana": 166.89,
+      "ms_min": 165.71,
+      "ms_max": 171.79,
       "ru": 5.84,
       "repeticiones": 5
     },
-    "mejora_tiempo_pct": 9.8
+    "mejora_tiempo_pct": 12.1
   },
   {
     "titulo": "E4 · Ordenamiento en servidor (consulta 2)",
@@ -77,25 +77,25 @@
       "descripcion": "orden en memoria (el servidor rechaza ordenar sin índice)",
       "documentos": 100,
       "bytes": 8914,
-      "ms_mediana": 194.25,
-      "ms_min": 186.42,
-      "ms_max": 203.73,
+      "ms_mediana": 198.6,
+      "ms_min": 189.25,
+      "ms_max": 211.29,
       "ru": 15.28,
       "repeticiones": 5,
       "nota": "el servidor rechazó el orden; se midió el respaldo en memoria",
-      "rechazo_servidor": "Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 0; ActivityId: b9114074-00d0-4443-931a-c8fb73112d82; Reason: (Message: {\"Errors\":[\"The index path corresponding to the specified order-by item is excluded.\"]}\r\nActivityId: b9114074-00d0-4443-931a-c8fb73112"
+      "rechazo_servidor": "Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 0; ActivityId: 1c0da01a-8db5-4ab9-affa-e5893d5dc62a; Reason: (Message: {\"Errors\":[\"The index path corresponding to the specified order-by item is excluded.\"]}\r\nActivityId: 1c0da01a-8db5-4ab9-affa-e5893d5dc"
     },
     "despues": {
       "descripcion": "índice {categoria, fecha_publicacion desc}",
       "documentos": 100,
       "bytes": 8914,
-      "ms_mediana": 167.49,
-      "ms_min": 166.0,
-      "ms_max": 170.15,
+      "ms_mediana": 168.53,
+      "ms_min": 167.58,
+      "ms_max": 171.29,
       "ru": 9.99,
       "repeticiones": 5
     },
-    "mejora_tiempo_pct": 13.8
+    "mejora_tiempo_pct": 15.1
   },
   {
     "titulo": "E5 · Filtro + orden en campañas (consulta 3)",
@@ -103,17 +103,23 @@
       "descripcion": "orden en memoria (servidor rechaza sin índice)",
       "documentos": 94,
       "bytes": 9542,
-      "ms_mediana": 189.48,
-      "ms_min": 186.56,
-      "ms_max": 194.8,
+      "ms_mediana": 191.74,
+      "ms_min": 190.1,
+      "ms_max": 194.06,
       "ru": 16.44,
       "repeticiones": 5,
-      "rechazo_servidor": "Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 0; ActivityId: bf6aaadb-5b05-4473-bf8f-334c640e415c; Reason: (Message: {\"Errors\":[\"The index path corresponding to the specified order-by item is excluded.\"]}\r\nActivityId: bf6aaadb-5b05-4473-bf8f-334c640e4"
+      "rechazo_servidor": "Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 0; ActivityId: b2588a7f-5621-47af-b55c-6f5a881b2e70; Reason: (Message: {\"Errors\":[\"The index path corresponding to the specified order-by item is excluded.\"]}\r\nActivityId: b2588a7f-5621-47af-b55c-6f5a881b2"
     },
     "despues": {
       "descripcion": "índice {objetivo, metricas_objetivo.likes desc}",
-      "error": "Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 0; ActivityId: 43e08711-428d-4257-8596-948a0021dcb4; Reason: (Message: {\"Errors\":[\"This query requires an index on ORDER BY attribute. The index is currently being built. You can track indexing progress: h"
+      "documentos": 94,
+      "bytes": 9542,
+      "ms_mediana": 169.06,
+      "ms_min": 167.93,
+      "ms_max": 171.89,
+      "ru": 10.67,
+      "repeticiones": 5
     },
-    "mejora_tiempo_pct": null
+    "mejora_tiempo_pct": 11.8
   }
 ]
